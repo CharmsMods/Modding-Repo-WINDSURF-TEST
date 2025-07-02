@@ -190,10 +190,22 @@ window.createAndAppendCard = createAndAppendCard; // NEW: Expose globally
         
         // Add click handler to the card for selection
         card.addEventListener('click', (e) => {
+            console.log('Card clicked');
             // If in multi-select mode, handle selection
-            if (typeof window.isMultiSelectModeActive === 'function' && window.isMultiSelectModeActive()) {
-                e.stopPropagation();
-                window.toggleAssetSelection(asset, card); // Function from bulk-operations.js
+            if (typeof window.isMultiSelectModeActive === 'function') {
+                const isActive = window.isMultiSelectModeActive();
+                console.log('Multi-select mode active:', isActive);
+                if (isActive) {
+                    e.stopPropagation();
+                    if (typeof window.toggleAssetSelection === 'function') {
+                        console.log('Calling toggleAssetSelection for asset:', asset.filename);
+                        window.toggleAssetSelection(asset, card);
+                    } else {
+                        console.error('toggleAssetSelection function not found');
+                    }
+                }
+            } else {
+                console.error('isMultiSelectModeActive function not found');
             }
         });
         
