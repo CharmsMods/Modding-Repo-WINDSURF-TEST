@@ -187,6 +187,24 @@ window.createAndAppendCard = createAndAppendCard; // NEW: Expose globally
         };
         mediaContainer.appendChild(mediaElement);
         card.appendChild(mediaContainer); // Append mediaContainer for non-MP3s
+        
+        // Add click handler to the card for selection
+        card.addEventListener('click', (e) => {
+            // If in multi-select mode, handle selection
+            if (typeof window.isMultiSelectModeActive === 'function' && window.isMultiSelectModeActive()) {
+                e.stopPropagation();
+                window.toggleAssetSelection(asset, card); // Function from bulk-operations.js
+            }
+        });
+        
+        // Add click handler to the media container for fullscreen
+        mediaContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Only show fullscreen if not in multi-select mode
+            if (typeof window.isMultiSelectModeActive === 'function' && !window.isMultiSelectModeActive()) {
+                showFullscreenImage(asset);
+            }
+        });
 
         // Create info container
         const infoContainer = document.createElement('div');
