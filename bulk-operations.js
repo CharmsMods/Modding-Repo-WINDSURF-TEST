@@ -314,234 +314,117 @@ function openBulkOperationsModal() {
 }
 
 /**
- * Closes the bulk operations modal.
- */
-function closeBulkOperationsModal() {
-    if (bulkOperationsModal) {
-        bulkOperationsModal.classList.remove('active');
-        console.log('Bulk operations modal closed.');
-    }
-    // Note: Selected assets are cleared when exiting multi-select mode, not just closing the modal.
-}
-
-/**
  * Applies saturation to all selected image assets.
  */
 async function applyBulkSaturation() {
-    if (selectedAssets.size === 0) {
-        console.warn('No assets selected for bulk saturation. Operation aborted.');
-        // Consider a user-facing message here.
-        return;
-    }
-
-    // Show loading overlay for bulk operation
-    window.showLoadingOverlay('Applying Saturation...');
-    const totalAssets = selectedAssets.size;
-    let processedCount = 0;
-
-    const saturationFactor = bulkSaturationSlider.value / 100;
-    console.log(`Starting bulk saturation for ${totalAssets} assets with factor: ${saturationFactor}`);
-
-    for (const asset of selectedAssets) {
-        if (asset.type.toLowerCase() === 'mp3') {
-            continue; // Skip MP3s (should already be filtered by selection logic, but good double check)
-        }
-
-        try {
-            window.updateConsoleLog(`Processing saturation for: ${asset.filename}`);
-            let imageBlob = null;
-
-            // Prioritize previously modified or original image blob
-            if (asset.modifiedImageBlob) {
-                imageBlob = asset.modifiedImageBlob;
-                console.log(`Using cached modified blob for ${asset.filename}`);
-            } else if (asset.originalImageBlob) {
-                imageBlob = asset.originalImageBlob;
-                console.log(`Using cached original blob for ${asset.filename}`);
-            } else {
-                // If no blob is present, fetch the original image
-                console.log(`Fetching original image for ${asset.filename}`);
-                const response = await fetch(asset.mediaPath);
-                if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
-                imageBlob = await response.blob();
-                asset.originalImageBlob = imageBlob; // Store original blob for future use
-            }
-
-            const img = new Image();
-            const imgLoadPromise = new Promise((resolve, reject) => {
-                img.onload = () => resolve();
-                img.onerror = (e) => reject(new Error('Image load error for bulk processing: ' + e.type));
-                img.src = URL.createObjectURL(imageBlob);
-            });
-            await imgLoadPromise;
-
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = img.width;
-            tempCanvas.height = img.height;
-
-            tempCtx.drawImage(img, 0, 0); // Draw original image to get pixel data
-
-            // Apply saturation directly to pixel data
-            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-            const pixels = imageData.data;
-
-            for (let i = 0; i < pixels.length; i += 4) {
-                const r = pixels[i];
-                const g = pixels[i + 1];
-                const b = pixels[i + 2];
-
-                const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-
-                pixels[i] = luminance + (r - luminance) * saturationFactor;
-                pixels[i + 1] = luminance + (g - luminance) * saturationFactor;
-                pixels[i + 2] = luminance + (b - luminance) * saturationFactor;
-
-                pixels[i] = Math.min(255, Math.max(0, pixels[i]));
-                pixels[i + 1] = Math.min(255, Math.max(0, pixels[i + 1]));
-                pixels[i + 2] = Math.min(255, Math.max(0, pixels[i + 2]));
-            }
-            tempCtx.putImageData(imageData, 0, 0);
-
-            const modifiedBlob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
-            asset.modifiedImageBlob = modifiedBlob;
-            asset.isModified = true;
-            asset.isNew = false;
-
-            window.updateCardVisualState(asset); // Update individual card visual state
-            URL.revokeObjectURL(img.src); // Clean up blob URL
-
-            processedCount++;
-            window.updateLoadingProgress(processedCount, totalAssets, `Applied saturation to ${asset.filename}`);
-
-        } catch (error) {
-            console.error(`Error applying saturation to ${asset.filename}:`, error);
-            window.updateConsoleLog(`[ERROR] Saturation failed for: ${asset.filename} - ${error.message}`);
-        }
-    }
-
-    window.updateConsoleLog('\nBulk saturation complete.');
-    window.hideLoadingOverlayWithDelay(3000, 'Bulk Saturation Complete!'); // Show message for 3 seconds
-    closeBulkOperationsModal();
-    toggleMultiSelectMode(); // Exit multi-select mode after operation
-    console.log('Bulk saturation operation finished.');
-}
-
-/**
- * Creates new identical textures for all selected image assets.
- */
-async function saveBulkNewTexture() {
-    if (selectedAssets.size === 0) {
-        console.warn('No assets selected for bulk new texture creation. Operation aborted.');
-        // Consider a user-facing message here.
-        return;
-    }
-
-    // Show loading overlay for bulk operation
-    window.showLoadingOverlay('Creating New Textures...');
-    const totalAssets = selectedAssets.size;
-    let processedCount = 0;
-
-    const width = parseInt(bulkNewTextureWidthInput.value);
-    const height = parseInt(bulkNewTextureHeightInput.value);
-    const color = bulkNewTextureColorInput.value;
-
-    if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
-        console.error('Invalid width or height for bulk new texture. Operation aborted.');
-        window.updateConsoleLog('[FATAL ERROR] Invalid width or height for new texture. Operation aborted.');
-        window.hideLoadingOverlayWithDelay(3000, 'Error: Invalid Dimensions');
-        return;
-    }
-    console.log(`Starting bulk new texture creation for ${totalAssets} assets with dimensions ${width}x${height} and color ${color}`);
-
-
-    for (const asset of selectedAssets) {
-        if (asset.type.toLowerCase() === 'mp3') {
-            continue; // Skip MP3s
-        }
-
-        try {
-            window.updateConsoleLog(`Creating new texture for: ${asset.filename}`);
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = width;
-            tempCanvas.height = height;
-
-            tempCtx.fillStyle = color;
-            tempCtx.fillRect(0, 0, width, height);
-
-            const newBlob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
-            asset.newImageBlob = newBlob;
-            asset.isNew = true;
-            asset.isModified = false; // Ensure it's marked as new, not modified
-
-            window.updateCardVisualState(asset); // Update individual card visual state
-
-            processedCount++;
-            window.updateLoadingProgress(processedCount, totalAssets, `Created new texture for ${asset.filename}`);
-
-        } catch (error) {
-            console.error(`Error creating new texture for ${asset.filename}:`, error);
-            window.updateConsoleLog(`[ERROR] New texture creation failed for: ${asset.filename} - ${error.message}`);
-        }
-    }
-
-    window.updateConsoleLog('\nBulk new texture creation complete.');
-    window.hideLoadingOverlayWithDelay(3000, 'Bulk Creation Complete!'); // Show message for 3 seconds
-    closeBulkOperationsModal();
-    toggleMultiSelectMode(); // Exit multi-select mode after operation
-    console.log('Bulk new texture creation operation finished.');
-}
-
-
-/**
- * Handles the file input change for bulk image upload, displays a preview,
- * and stores the uploaded image blob.
- * @param {Event} event The change event from the file input.
- */
-function handleBulkImageUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        // Basic file type validation
-        if (!file.type.startsWith('image/')) {
-            window.updateConsoleLog('[WARNING] Please upload an image file (PNG or JPG).');
-            bulkUploadImageInput.value = ''; // Clear the input
-            bulkUploadImagePreview.src = '';
-            bulkUploadImagePreview.style.display = 'none';
-            bulkUploadPreviewPlaceholder.style.display = 'block';
-            uploadedImageBlob = null;
-            applyBulkUploadTextureButton.disabled = true;
+    const selectedCount = selectedAssets.size;
+    if (selectedCount === 0) return;
+    
+    try {
+        const result = await window.showBulkEditConfirm?.(selectedCount) || { shouldProceed: true, updateVisually: true };
+        
+        if (!result.shouldProceed) {
+            console.log('Bulk saturation operation cancelled by user');
             return;
         }
+        
+        const updateVisually = result.updateVisually;
+        
+        // Show loading overlay for bulk operation
+        window.showLoadingOverlay('Applying Saturation...');
+        const totalAssets = selectedAssets.size;
+        let processedCount = 0;
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            bulkUploadImagePreview.src = e.target.result;
-            bulkUploadImagePreview.style.display = 'block';
-            bulkUploadPreviewPlaceholder.style.display = 'none';
-            uploadedImageBlob = file; // Store the File object (which is a Blob)
-            applyBulkUploadTextureButton.disabled = false; // Enable the button
-            window.updateConsoleLog(`Uploaded image for bulk use: ${file.name}`);
-        };
-        reader.onerror = (error) => {
-            console.error('Error reading file:', error);
-            window.updateConsoleLog('[ERROR] Failed to read uploaded image file.');
-            bulkUploadImagePreview.src = '';
-            bulkUploadImagePreview.style.display = 'none';
-            bulkUploadPreviewPlaceholder.style.display = 'block';
-            uploadedImageBlob = null;
-            applyBulkUploadTextureButton.disabled = true;
-        };
-        reader.readAsDataURL(file); // Read as Data URL for preview
-    } else {
-        // No file selected
-        bulkUploadImageInput.value = '';
-        bulkUploadImagePreview.src = '';
-        bulkUploadImagePreview.style.display = 'none';
-        bulkUploadPreviewPlaceholder.style.display = 'block';
-        uploadedImageBlob = null;
-        applyBulkUploadTextureButton.disabled = true;
-        window.updateConsoleLog('No image selected for bulk upload.');
+        const saturationFactor = bulkSaturationSlider.value / 100;
+        console.log(`Starting bulk saturation for ${totalAssets} assets with factor: ${saturationFactor}`);
+
+        for (const asset of selectedAssets) {
+            if (asset.type.toLowerCase() === 'mp3') {
+                continue; // Skip MP3s (should already be filtered by selection logic, but good double check)
+            }
+
+            try {
+                window.updateConsoleLog(`Processing saturation for: ${asset.filename}`);
+                let imageBlob = null;
+
+                // Prioritize previously modified or original image blob
+                if (asset.modifiedImageBlob) {
+                    imageBlob = asset.modifiedImageBlob;
+                    console.log(`Using cached modified blob for ${asset.filename}`);
+                } else if (asset.originalImageBlob) {
+                    imageBlob = asset.originalImageBlob;
+                    console.log(`Using cached original blob for ${asset.filename}`);
+                } else {
+                    // If no blob is present, fetch the original image
+                    console.log(`Fetching original image for ${asset.filename}`);
+                    const response = await fetch(asset.mediaPath);
+                    if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+                    imageBlob = await response.blob();
+                    asset.originalImageBlob = imageBlob; // Store original blob for future use
+                }
+
+                const img = new Image();
+                const imgLoadPromise = new Promise((resolve, reject) => {
+                    img.onload = () => resolve();
+                    img.onerror = (e) => reject(new Error('Image load error for bulk processing: ' + e.type));
+                    img.src = URL.createObjectURL(imageBlob);
+                });
+                await imgLoadPromise;
+
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = img.width;
+                tempCanvas.height = img.height;
+
+                tempCtx.drawImage(img, 0, 0); // Draw original image to get pixel data
+
+                // Apply saturation directly to pixel data
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const pixels = imageData.data;
+
+                for (let i = 0; i < pixels.length; i += 4) {
+                    const r = pixels[i];
+                    const g = pixels[i + 1];
+                    const b = pixels[i + 2];
+
+                    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+                    pixels[i] = luminance + (r - luminance) * saturationFactor;
+                    pixels[i + 1] = luminance + (g - luminance) * saturationFactor;
+                    pixels[i + 2] = luminance + (b - luminance) * saturationFactor;
+
+                    pixels[i] = Math.min(255, Math.max(0, pixels[i]));
+                    pixels[i + 1] = Math.min(255, Math.max(0, pixels[i + 1]));
+                    pixels[i + 2] = Math.min(255, Math.max(0, pixels[i + 2]));
+                }
+                tempCtx.putImageData(imageData, 0, 0);
+
+                const modifiedBlob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/png'));
+                asset.modifiedImageBlob = modifiedBlob;
+                asset.isModified = true;
+                asset.isNew = false;
+
+                window.updateCardVisualState(asset); // Update individual card visual state
+                URL.revokeObjectURL(img.src); // Clean up blob URL
+
+                processedCount++;
+                window.updateLoadingProgress(processedCount, totalAssets, `Applied saturation to ${asset.filename}`);
+
+            } catch (error) {
+                console.error(`Error applying saturation to ${asset.filename}:`, error);
+                window.updateConsoleLog(`[ERROR] Saturation failed for: ${asset.filename} - ${error.message}`);
+            }
+        }
+
+        window.updateConsoleLog('\nBulk saturation complete.');
+        window.hideLoadingOverlayWithDelay(3000, 'Bulk Saturation Complete!'); // Show message for 3 seconds
+        closeBulkOperationsModal();
+        toggleMultiSelectMode(); // Exit multi-select mode after operation
+        console.log('Bulk saturation operation finished.');
+    } catch (error) {
+        console.error('Error during bulk saturation operation:', error);
+        window.updateConsoleLog(`[FATAL ERROR] Bulk saturation operation failed: ${error.message}`);
+        window.hideLoadingOverlayWithDelay(3000, 'Saturation Failed!');
     }
 }
 
@@ -550,184 +433,300 @@ function handleBulkImageUpload(event) {
  * converting formats if necessary.
  */
 async function applyBulkUploadedTexture() {
+    const selectedCount = selectedAssets.size;
+    if (selectedCount === 0) {
+        console.warn('No assets selected for bulk texture upload. Operation aborted.');
+        return;
+    }
+
     if (!uploadedImageBlob) {
-        console.warn('No image uploaded for bulk application. Operation aborted.');
-        window.updateConsoleLog('[WARNING] Please upload an image file first.');
+        console.warn('No image has been uploaded for bulk texture application.');
         return;
     }
-    if (selectedAssets.size === 0) {
-        console.warn('No assets selected for bulk image application. Operation aborted.');
-        window.updateConsoleLog('[WARNING] Please select assets to apply the image to.');
-        return;
-    }
-
-    // Ensure window.convertImageBlob is available
-    if (typeof window.convertImageBlob !== 'function') {
-        console.error('Image conversion utility (convertImageBlob) not found. Make sure image-converter.js is loaded.');
-        window.updateConsoleLog('[FATAL ERROR] Image conversion utility missing. Cannot proceed with bulk upload.');
-        window.hideLoadingOverlayWithDelay(3000, 'Error: Conversion Utility Missing!');
-        return;
-    }
-
-
-    window.showLoadingOverlay('Applying Uploaded Texture...');
-    const totalAssets = selectedAssets.size;
-    let processedCount = 0;
-
-    // Determine if conversion is needed based on selected assets and uploaded image type
-    const uploadedMimeType = uploadedImageBlob.type; // e.g., 'image/png' or 'image/jpeg'
-    const uploadedExtension = uploadedMimeType.split('/')[1]; // 'png' or 'jpeg'
-
-    const targetMimeTypes = new Set();
-    for (const asset of selectedAssets) {
-        // Only consider image types for conversion needs
-        if (asset.type.toLowerCase() === 'png' || asset.type.toLowerCase() === 'jpg') {
-            targetMimeTypes.add(`image/${asset.type.toLowerCase()}`);
+    
+    try {
+        const result = await window.showBulkEditConfirm?.(selectedCount) || { shouldProceed: true, updateVisually: true };
+        
+        if (!result.shouldProceed) {
+            console.log('Bulk upload texture operation cancelled by user');
+            return;
         }
-    }
+        
+        const updateVisually = result.updateVisually;
 
-    // If targetMimeTypes contains both image/png and image/jpeg, or if any asset's type
-    // doesn't match the uploaded type, conversion will be dynamic per asset.
-    const needsDynamicConversion = targetMimeTypes.size > 1 || (targetMimeTypes.size === 1 && !targetMimeTypes.has(uploadedMimeType));
-
-    console.log(`Starting bulk apply for ${totalAssets} assets. Dynamic conversion needed: ${needsDynamicConversion}`);
-    window.updateConsoleLog(`Uploaded image type: ${uploadedMimeType}`);
-
-    for (const asset of selectedAssets) {
-        // Skip MP3s (should already be filtered by selection logic, but good double check)
-        if (asset.type.toLowerCase() === 'mp3') {
-            continue;
+        // Ensure window.convertImageBlob is available
+        if (typeof window.convertImageBlob !== 'function') {
+            console.error('Image conversion utility (convertImageBlob) not found. Make sure image-converter.js is loaded.');
+            window.updateConsoleLog('[FATAL ERROR] Image conversion utility missing. Cannot proceed with bulk upload.');
+            window.hideLoadingOverlayWithDelay(3000, 'Error: Conversion Utility Missing!');
+            return;
         }
 
-        try {
-            window.updateConsoleLog(`Processing: ${asset.filename}`);
-            let finalBlob = uploadedImageBlob; // Start with the original uploaded blob
+        window.showLoadingOverlay('Applying Uploaded Texture...');
+        const totalAssets = selectedAssets.size;
+        let processedCount = 0;
 
-            const assetMimeType = `image/${asset.type.toLowerCase()}`;
+        // Determine if conversion is needed based on selected assets and uploaded image type
+        const uploadedMimeType = uploadedImageBlob.type; // e.g., 'image/png' or 'image/jpeg'
+        const uploadedExtension = uploadedMimeType.split('/')[1]; // 'png' or 'jpeg'
 
-            // Perform conversion if:
-            // 1. Dynamic conversion is generally needed (mixed types or mismatch)
-            // 2. The current asset's required MIME type does not match the uploaded image's MIME type
-            if (needsDynamicConversion && assetMimeType !== uploadedMimeType) {
-                window.updateConsoleLog(`Converting ${uploadedExtension.toUpperCase()} to ${asset.type.toUpperCase()} for: ${asset.filename}`);
-                finalBlob = await window.convertImageBlob(uploadedImageBlob, assetMimeType);
+        const targetMimeTypes = new Set();
+        for (const asset of selectedAssets) {
+            // Only consider image types for conversion needs
+            if (asset.type.toLowerCase() === 'png' || asset.type.toLowerCase() === 'jpg') {
+                targetMimeTypes.add(`image/${asset.type.toLowerCase()}`);
+            }
+        }
+
+        // If targetMimeTypes contains both image/png and image/jpeg, or if any asset's type
+        // doesn't match the uploaded type, conversion will be dynamic per asset.
+        const needsDynamicConversion = targetMimeTypes.size > 1 || (targetMimeTypes.size === 1 && !targetMimeTypes.has(uploadedMimeType));
+
+        console.log(`Starting bulk apply for ${totalAssets} assets. Dynamic conversion needed: ${needsDynamicConversion}`);
+        window.updateConsoleLog(`Uploaded image type: ${uploadedMimeType}`);
+
+        for (const asset of selectedAssets) {
+            // Skip MP3s (should already be filtered by selection logic, but good double check)
+            if (asset.type.toLowerCase() === 'mp3') {
+                continue;
             }
 
-            if (finalBlob) {
-                asset.newImageBlob = finalBlob;
-                asset.isNew = true;
-                asset.isModified = false;
-                window.updateCardVisualState(asset); // Update individual card visual state
-                window.updateConsoleLog(`Applied new texture to ${asset.filename}`);
-            } else {
-                throw new Error('Image conversion failed.');
+            try {
+                window.updateConsoleLog(`Processing: ${asset.filename}`);
+                let finalBlob = uploadedImageBlob; // Start with the original uploaded blob
+
+                const assetMimeType = `image/${asset.type.toLowerCase()}`;
+
+                // Perform conversion if:
+                // 1. Dynamic conversion is generally needed (mixed types or mismatch)
+                // 2. The current asset's required MIME type does not match the uploaded image's MIME type
+                if (needsDynamicConversion && assetMimeType !== uploadedMimeType) {
+                    window.updateConsoleLog(`Converting ${uploadedExtension.toUpperCase()} to ${asset.type.toUpperCase()} for: ${asset.filename}`);
+                    finalBlob = await window.convertImageBlob(uploadedImageBlob, assetMimeType);
+                }
+
+                if (finalBlob) {
+                    asset.newImageBlob = finalBlob;
+                    asset.isNew = true;
+                    asset.isModified = false;
+                    window.updateCardVisualState(asset); // Update individual card visual state
+                    window.updateConsoleLog(`Applied new texture to ${asset.filename}`);
+                } else {
+                    throw new Error('Image conversion failed.');
+                }
+
+                processedCount++;
+                window.updateLoadingProgress(processedCount, totalAssets, `Applied to ${asset.filename}`);
+
+            } catch (error) {
+                console.error(`Error applying uploaded texture to ${asset.filename}:`, error);
+                window.updateConsoleLog(`[ERROR] Application failed for: ${asset.filename} - ${error.message}`);
             }
-
-            processedCount++;
-            window.updateLoadingProgress(processedCount, totalAssets, `Applied to ${asset.filename}`);
-
-        } catch (error) {
-            console.error(`Error applying uploaded texture to ${asset.filename}:`, error);
-            window.updateConsoleLog(`[ERROR] Application failed for: ${asset.filename} - ${error.message}`);
         }
+
+        window.updateConsoleLog('\nBulk uploaded texture application complete.');
+        window.hideLoadingOverlayWithDelay(3000, 'Bulk Upload Complete!');
+        closeBulkOperationsModal();
+        toggleMultiSelectMode(); // Exit multi-select mode after operation
+        console.log('Bulk uploaded texture operation finished.');
+
+        // Reset the upload form
+        bulkUploadImageInput.value = '';
+        bulkUploadImagePreview.src = '';
+        bulkUploadImagePreview.style.display = 'none';
+        bulkUploadPreviewPlaceholder.style.display = 'block';
+        uploadedImageBlob = null;
+        applyBulkUploadTextureButton.disabled = true;
+    } catch (error) {
+        console.error('Error during bulk uploaded texture operation:', error);
+        window.updateConsoleLog(`[FATAL ERROR] Bulk uploaded texture operation failed: ${error.message}`);
+        window.hideLoadingOverlayWithDelay(3000, 'Upload Failed!');
     }
-
-    window.updateConsoleLog('\nBulk uploaded texture application complete.');
-    window.hideLoadingOverlayWithDelay(3000, 'Bulk Upload Complete!');
-    closeBulkOperationsModal();
-    toggleMultiSelectMode(); // Exit multi-select mode after operation
-    console.log('Bulk uploaded texture operation finished.');
-
-    // Reset the upload form
-    bulkUploadImageInput.value = '';
-    bulkUploadImagePreview.src = '';
-    bulkUploadImagePreview.style.display = 'none';
-    bulkUploadPreviewPlaceholder.style.display = 'block';
-    uploadedImageBlob = null;
-    applyBulkUploadTextureButton.disabled = true;
 }
 
 /**
- * Toggles the excluded state of all currently selected assets
+ * Creates new identical textures for all selected image assets.
  */
-function toggleExcludeSelected() {
-    if (selectedAssets.size === 0) {
-        alert('No assets selected to exclude.');
+async function saveBulkNewTexture() {
+    const selectedCount = selectedAssets.size;
+    if (selectedCount === 0) {
+        console.warn('No assets selected for bulk new texture creation. Operation aborted.');
         return;
     }
-
-    // Determine if we're excluding or including (if any selected asset is not excluded, we'll exclude all)
-    const anyIncluded = Array.from(selectedAssets).some(asset => !asset.excluded);
-    const newExcludedState = anyIncluded;
-
-    // Update all selected assets
-    selectedAssets.forEach(asset => {
-        asset.excluded = newExcludedState;
+    
+    try {
+        const result = await window.showBulkEditConfirm?.(selectedCount) || { shouldProceed: true, updateVisually: true };
         
-        // Update the card's visual state
-        if (asset.cardElement) {
-            if (newExcludedState) {
-                asset.cardElement.classList.add('excluded');
-            } else {
-                asset.cardElement.classList.remove('excluded');
-            }
+        if (!result.shouldProceed) {
+            console.log('Bulk new texture creation cancelled by user');
+            return;
         }
-    });
+        
+        const updateVisually = result.updateVisually;
 
-    // Update the button text based on the action
-    const action = newExcludedState ? 'Excluded' : 'Included';
-    const count = selectedAssets.size;
-    
-    // Show a temporary message
-    const originalText = toggleExcludeButton.textContent;
-    toggleExcludeButton.textContent = `${action} ${count} asset${count > 1 ? 's' : ''}`;
-    
-    // Log the action
-    console.log(`${action} ${count} asset${count > 1 ? 's' : ''} from export`);
-    window.updateConsoleLog(`${action} ${count} asset${count > 1 ? 's' : ''} from export`);
-    
-    // Reset the button text after a delay
-    setTimeout(() => {
-        toggleExcludeButton.textContent = originalText;
-    }, 2000);
-    
-    // Close the modal after a short delay
-    setTimeout(() => {
-        closeBulkOperationsModal();
-    }, 1500);
+        const newWidth = parseInt(resizeWidthInput.value, 10);
+        const newHeight = parseInt(resizeHeightInput.value, 10);
+        const maintainAspect = maintainAspectCheckbox.checked;
+        
+        if (isNaN(newWidth) || isNaN(newHeight) || newWidth <= 0 || newHeight <= 0) {
+            alert('Please enter valid width and height values (greater than 0)');
+            return;
+        }
+        
+        if (selectedAssets.size === 0) {
+            alert('No assets selected for resizing');
+            return;
+        }
+        
+        // Show loading overlay
+        window.showLoadingOverlay(`Resizing ${selectedAssets.size} assets to ${newWidth}x${newHeight}...`);
+        console.log(`Starting bulk resize operation on ${selectedAssets.size} assets to ${newWidth}x${newHeight}`);
+        
+        try {
+            let successCount = 0;
+            const totalAssets = selectedAssets.size;
+            
+            // Process each selected asset
+            for (const asset of selectedAssets) {
+                try {
+                    // Skip non-image assets
+                    if (asset.type && asset.type.toLowerCase() === 'mp3') {
+                        console.log(`Skipping non-image asset: ${asset.filename}`);
+                        continue;
+                    }
+                    
+                    // Update progress
+                    const progress = (successCount / totalAssets) * 100;
+                    window.updateLoadingProgress(successCount, totalAssets, `Resizing ${asset.filename}...`);
+                    
+                    // Create a canvas to perform the resize
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set canvas dimensions to new size
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+                    
+                    // Draw the image to the canvas with the new dimensions
+                    const img = new Image();
+                    
+                    // Create a promise to handle the image loading
+                    await new Promise((resolve, reject) => {
+                        img.onload = async () => {
+                            try {
+                                // Draw the image with the new dimensions
+                                ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                                
+                                // Convert the canvas back to a blob
+                                canvas.toBlob((blob) => {
+                                    if (!blob) {
+                                        reject(new Error('Failed to create blob from canvas'));
+                                        return;
+                                    }
+                                    
+                                    // Update the asset's blob and dimensions
+                                    asset.blob = blob;
+                                    asset.width = newWidth;
+                                    asset.height = newHeight;
+                                    
+                                    // Update the asset's preview
+                                    if (asset.previewUrl) {
+                                        URL.revokeObjectURL(asset.previewUrl);
+                                    }
+                                    asset.previewUrl = URL.createObjectURL(blob);
+                                    
+                                    // Update the card's thumbnail
+                                    if (window.updateAssetCardThumbnail) {
+                                        window.updateAssetCardThumbnail(asset);
+                                    }
+                                    
+                                    successCount++;
+                                    resolve();
+                                }, 'image/png');
+                            } catch (error) {
+                                reject(error);
+                            }
+                        };
+                        
+                        img.onerror = () => {
+                            reject(new Error('Failed to load image for resizing'));
+                        };
+                        
+                        // Set the image source to the asset's blob URL
+                        img.src = asset.previewUrl || URL.createObjectURL(asset.blob);
+                    });
+                    
+                    console.log(`Successfully resized ${asset.filename} to ${newWidth}x${newHeight}`);
+                    
+                } catch (error) {
+                    console.error(`Error resizing ${asset.filename}:`, error);
+                    window.updateConsoleLog(`[ERROR] Failed to resize ${asset.filename}: ${error.message}`);
+                }
+            }
+            
+            // Show completion message
+            const message = `Successfully resized ${successCount} of ${totalAssets} assets to ${newWidth}x${newHeight}`;
+            console.log(message);
+            window.updateConsoleLog(`\n${message}`);
+            
+            // Close the modal and reset the UI
+            closeBulkOperationsModal();
+            window.hideLoadingOverlayWithDelay(3000, 'Resize Complete!');
+            
+            // Exit multi-select mode after operation
+            toggleMultiSelectMode();
+            
+        } catch (error) {
+            console.error('Error during bulk resize operation:', error);
+            window.updateConsoleLog(`[FATAL ERROR] Bulk resize operation failed: ${error.message}`);
+            window.hideLoadingOverlayWithDelay(3000, 'Resize Failed!');
+        }
+    } catch (error) {
+        console.error('Error during bulk new texture creation:', error);
+        window.updateConsoleLog(`[FATAL ERROR] Bulk new texture creation failed: ${error.message}`);
+        window.hideLoadingOverlayWithDelay(3000, 'Creation Failed!');
+    }
 }
 
 /**
  * Applies resizing to all selected image assets.
  */
 async function applyBulkResize() {
-    const resizeWidthInput = document.getElementById('resize-width');
-    const resizeHeightInput = document.getElementById('resize-height');
-    
-    // Validate inputs
-    if (!resizeWidthInput || !resizeHeightInput) {
-        console.error('Resize inputs not found');
+    const selectedCount = selectedAssets.size;
+    if (selectedCount === 0) {
+        console.warn('No assets selected for bulk resize. Operation aborted.');
         return;
     }
-    
-    const newWidth = parseInt(resizeWidthInput.value || resizeWidthInput.placeholder);
-    const newHeight = parseInt(resizeHeightInput.value || resizeHeightInput.placeholder);
+
+    // Get input values
+    const newWidth = parseInt(resizeWidthInput.value, 10);
+    const newHeight = parseInt(resizeHeightInput.value, 10);
+    const maintainAspect = maintainAspectCheckbox.checked;
     
     if (isNaN(newWidth) || isNaN(newHeight) || newWidth <= 0 || newHeight <= 0) {
         alert('Please enter valid width and height values (greater than 0)');
         return;
     }
     
-    if (selectedAssets.size === 0) {
-        alert('No assets selected for resizing');
-        return;
-    }
-    
-    // Show loading overlay
-    window.showLoadingOverlay(`Resizing ${selectedAssets.size} assets to ${newWidth}x${newHeight}...`);
-    console.log(`Starting bulk resize operation on ${selectedAssets.size} assets to ${newWidth}x${newHeight}`);
-    
     try {
+        const result = await window.showBulkEditConfirm?.(selectedCount) || { shouldProceed: true, updateVisually: true };
+        
+        if (!result.shouldProceed) {
+            console.log('Bulk resize operation cancelled by user');
+            return;
+        }
+        
+        const updateVisually = result.updateVisually;
+        
+        if (selectedAssets.size === 0) {
+            alert('No assets selected for resizing');
+            return;
+        }
+        
+        // Show loading overlay
+        window.showLoadingOverlay(`Resizing ${selectedAssets.size} assets to ${newWidth}x${newHeight}...`);
+        console.log(`Starting bulk resize operation on ${selectedAssets.size} assets to ${newWidth}x${newHeight}`);
+        
         let successCount = 0;
         const totalAssets = selectedAssets.size;
         
