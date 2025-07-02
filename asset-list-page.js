@@ -834,9 +834,59 @@ async function initiateZipDownload(exportType) {
     }
 }
 
+// Function to select all visible cards
+function selectAllVisibleCards() {
+    if (!window.isMultiSelectModeActive || !window.isMultiSelectModeActive()) {
+        console.log('Multi-select mode is not active');
+        return 0;
+    }
+
+    const visibleCards = document.querySelectorAll('.texture-card:not([style*="display: none"])');
+    let selectedCount = 0;
+    
+    visibleCards.forEach(card => {
+        // Skip already selected cards
+        if (card.classList.contains('selected')) {
+            return;
+        }
+        
+        // Find the asset that corresponds to this card element
+        const asset = window.allAssets.find(a => a.cardElement === card);
+        if (asset) {
+            // Simulate a click on the card to select it
+            card.click();
+            selectedCount++;
+        }
+    });
+    
+    console.log(`Selected ${selectedCount} visible cards`);
+    return selectedCount;
+}
+
+// Make the function available globally
+window.selectAllVisibleCards = selectAllVisibleCards;
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeGallery(); // Initialize the gallery and populate allAssets array metadata only
+
+    // Add event listener for the search input
+    const searchInput = document.getElementById('search-input');
+    const clearSearchButton = document.getElementById('clear-search');
+    const selectAllButton = document.getElementById('select-all-button');
+    
+    // Add click handler for select all button
+    if (selectAllButton) {
+        selectAllButton.addEventListener('click', () => {
+            // First ensure we're in multi-select mode
+            if (window.toggleMultiSelectMode && !window.isMultiSelectModeActive()) {
+                window.toggleMultiSelectMode();
+            }
+            
+            // Then select all visible cards
+            const selectedCount = selectAllVisibleCards();
+            console.log(`Selected ${selectedCount} visible cards`);
+        });
+    }
 
     const downloadAllZipButton = document.getElementById('download-all-zip-button');
 

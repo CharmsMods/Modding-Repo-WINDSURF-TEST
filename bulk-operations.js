@@ -141,15 +141,33 @@ document.addEventListener('DOMContentLoaded', () => {
     window.toggleAssetSelection = toggleAssetSelection;
     window.isMultiSelectModeActive = () => isMultiSelectMode;
     window.updateBulkActionButtonsState = updateBulkActionButtonsState;
+    window.toggleMultiSelectMode = toggleMultiSelectMode;
 });
 
 /**
- * Toggles multi-selection mode on and off.
+ * Toggles multi-select mode on and off.
  */
 function toggleMultiSelectMode() {
     isMultiSelectMode = !isMultiSelectMode;
     document.body.classList.toggle('multi-select-active', isMultiSelectMode);
-    console.log(`toggleMultiSelectMode: isMultiSelectMode is now ${isMultiSelectMode}`);
+    
+    // Show/hide the multi-select UI
+    const multiSelectUI = document.querySelector('.multi-select-actions');
+    const selectAllButton = document.getElementById('select-all-button');
+    
+    if (multiSelectUI) {
+        multiSelectUI.style.display = isMultiSelectMode ? 'flex' : 'none';
+    }
+    
+    // Show/hide the select all button
+    if (selectAllButton) {
+        selectAllButton.style.display = isMultiSelectMode ? 'inline-flex' : 'none';
+    }
+    
+    // Clear selection when exiting multi-select mode
+    if (!isMultiSelectMode) {
+        clearSelectedAssets();
+    }
 
     if (isMultiSelectMode) {
         toggleMultiSelectButton.textContent = 'Exit Selection';
