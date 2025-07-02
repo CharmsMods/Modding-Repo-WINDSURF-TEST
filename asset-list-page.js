@@ -102,37 +102,6 @@ window.createAndAppendCard = createAndAppendCard; // NEW: Expose globally
         // Create a wrapper for the action buttons to manage their layout
         const mp3ButtonsWrapper = document.createElement('div');
         mp3ButtonsWrapper.className = 'mp3-buttons-wrapper card-actions'; // Added card-actions class for consistent styling
-        
-        // Add Exclude from Export button
-        const excludeButton = document.createElement('button');
-        excludeButton.className = `exclude-export-button ${asset.excluded ? 'excluded' : ''}`;
-        excludeButton.innerHTML = `
-            <i class="fas fa-ban"></i>
-            <span>${asset.excluded ? 'Included' : 'Exclude'}</span>
-        `;
-        excludeButton.onclick = (event) => {
-            event.stopPropagation();
-            asset.excluded = !asset.excluded;
-            
-            // Update button text and class
-            const icon = excludeButton.querySelector('i');
-            const text = excludeButton.querySelector('span');
-            
-            if (asset.excluded) {
-                excludeButton.classList.add('excluded');
-                icon.className = 'fas fa-check';
-                text.textContent = 'Included';
-                card.classList.add('excluded');
-            } else {
-                excludeButton.classList.remove('excluded');
-                icon.className = 'fas fa-ban';
-                text.textContent = 'Exclude';
-                card.classList.remove('excluded');
-            }
-        };
-        
-        // Add the exclude button to the MP3 card
-        mp3ButtonsWrapper.appendChild(excludeButton);
 
         const copyFolderButton = document.createElement('button');
         copyFolderButton.className = 'copy-folder-button';
@@ -241,35 +210,7 @@ window.createAndAppendCard = createAndAppendCard; // NEW: Expose globally
         // Create card actions container
         const cardActions = document.createElement('div');
         cardActions.className = 'card-actions';
-        
-        // Add Exclude from Export button
-        const excludeButton = document.createElement('button');
-        excludeButton.className = `exclude-export-button ${asset.excluded ? 'excluded' : ''}`;
-        excludeButton.innerHTML = `
-            <i class="fas ${asset.excluded ? 'fa-check' : 'fa-ban'}"></i>
-            <span>${asset.excluded ? 'Included' : 'Exclude'}</span>
-        `;
-        excludeButton.onclick = (event) => {
-            event.stopPropagation();
-            asset.excluded = !asset.excluded;
-            
-            // Update button text and class
-            const icon = excludeButton.querySelector('i');
-            const text = excludeButton.querySelector('span');
-            
-            if (asset.excluded) {
-                excludeButton.classList.add('excluded');
-                icon.className = 'fas fa-check';
-                text.textContent = 'Included';
-                card.classList.add('excluded');
-            } else {
-                excludeButton.classList.remove('excluded');
-                icon.className = 'fas fa-ban';
-                text.textContent = 'Exclude';
-                card.classList.remove('excluded');
-            }
-        };
-        cardActions.appendChild(excludeButton);
+                // Exclude functionality has been moved to bulk operations
         
         // Add Edit Asset button
         const editAssetButton = document.createElement('button');
