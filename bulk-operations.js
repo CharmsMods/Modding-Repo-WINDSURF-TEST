@@ -44,6 +44,9 @@ let resizeHeightInput;
 let maintainAspectCheckbox;
 let applyBulkResizeButton;
 
+// New: DOM element for exclude button
+let toggleExcludeButton;
+
 let uploadedImageBlob = null; // Stores the actual uploaded image blob for bulk application
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -83,6 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
     bulkUploadImagePreview = document.getElementById('bulk-upload-image-preview');
     applyBulkUploadTextureButton = document.getElementById('apply-bulk-upload-texture');
     bulkUploadPreviewPlaceholder = document.getElementById('bulk-upload-preview-placeholder');
+    
+    // Get reference to the exclude button
+    toggleExcludeButton = document.getElementById('toggle-exclude-selected');
 
     if (!bulkUploadImageInput) console.error('ERROR: bulk-upload-image-input not found!');
     if (!bulkUploadImagePreview) console.error('ERROR: bulk-upload-image-preview not found!');
@@ -123,6 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (applyBulkUploadTextureButton) {
         applyBulkUploadTextureButton.addEventListener('click', applyBulkUploadedTexture);
+    }
+    
+    // Add event listener for the exclude button
+    if (toggleExcludeButton) {
+        toggleExcludeButton.addEventListener('click', toggleExcludeSelected);
     }
 
 
@@ -616,6 +627,56 @@ async function applyBulkUploadedTexture() {
     bulkUploadPreviewPlaceholder.style.display = 'block';
     uploadedImageBlob = null;
     applyBulkUploadTextureButton.disabled = true;
+}
+
+/**
+ * Toggles the excluded state of all currently selected assets
+ */
+function toggleExcludeSelected() {
+    if (selectedAssets.size === 0) {
+        alert('No assets selected to exclude.');
+        return;
+    }
+
+    // Determine if we're excluding or including (if any selected asset is not excluded, we'll exclude all)
+    const anyIncluded = Array.from(selectedAssets).some(asset => !asset.excluded);
+    const newExcludedState = anyIncluded;
+
+    // Update all selected assets
+    selectedAssets.forEach(asset => {
+        asset.excluded = newExcludedState;
+        
+        // Update the card's visual state
+        if (asset.cardElement) {
+            if (newExcludedState) {
+                asset.cardElement.classList.add('excluded');
+            } else {
+                asset.cardElement.classList.remove('excluded');
+            }
+        }
+    });
+
+    // Update the button text based on the action
+    const action = newExcludedState ? 'Excluded' : 'Included';
+    const count = selectedAssets.size;
+    
+    // Show a temporary message
+    const originalText = toggleExcludeButton.textContent;
+    toggleExcludeButton.textContent = `${action} ${count} asset${count > 1 ? 's' : ''}`;
+    
+    // Log the action
+    console.log(`${action} ${count} asset${count > 1 ? 's' : ''} from export`);
+    window.updateConsoleLog(`${action} ${count} asset${count > 1 ? 's' : ''} from export`);
+    
+    // Reset the button text after a delay
+    setTimeout(() => {
+        toggleExcludeButton.textContent = originalText;
+    }, 2000);
+    
+    // Close the modal after a short delay
+    setTimeout(() => {
+        closeBulkOperationsModal();
+    }, 1500);
 }
 
 /**
