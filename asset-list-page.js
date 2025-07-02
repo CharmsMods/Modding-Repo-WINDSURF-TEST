@@ -146,10 +146,17 @@ window.createAndAppendCard = createAndAppendCard; // NEW: Expose globally
         card.appendChild(selectCheckbox);
 
         // Add click listener to the card for multi-selection
-        card.addEventListener('click', () => {
-            // Check if multi-select mode is active (function from bulk-operations.js)
+        card.addEventListener('click', (e) => {
+            // Check if the click was on the image (mediaElement or its container)
+            const isImageClick = e.target === mediaElement || e.target === mediaContainer;
+            
+            // If in multi-select mode, handle selection
             if (typeof window.isMultiSelectModeActive === 'function' && window.isMultiSelectModeActive()) {
                 window.toggleAssetSelection(asset, card); // Function from bulk-operations.js
+            } 
+            // If not in multi-select mode and the click was on the image, show fullscreen
+            else if (isImageClick) {
+                showFullscreenImage(asset);
             }
         });
 
@@ -833,6 +840,66 @@ async function initiateZipDownload(exportType) {
         }, 3000); // Only reset button after overlay hides
     }
 }
+
+// Function to show image in fullscreen
+function showFullscreenImage(asset) {
+    if (window.isMultiSelectModeActive && window.isMultiSelectModeActive()) {
+        return; // Don't show fullscreen in selection mode
+    }
+    
+    const fullscreenViewer = document.getElementById('fullscreen-viewer');
+    const fullscreenImage = document.getElementById('fullscreen-image');
+    const filenameElement = document.getElementById('fullscreen-filename');
+    const resolutionElement = document.getElementById('fullscreen-resolution');
+    
+    // Set the image source and info
+    fullscreenImage.src = asset.mediaPath;
+    filenameElement.textContent = asset.filename;
+    
+    // Get image dimensions when loaded
+    const img = new Image();
+    img.onload = function() {
+        resolutionElement.textContent = `${this.width} × ${this.height}px`;
+    };
+    img.src = asset.mediaPath;
+    
+    // Show the viewer
+    fullscreenViewer.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+}
+
+// Close fullscreen viewer
+function closeFullscreenViewer() {
+    const fullscreenViewer = document.getElementById('fullscreen-viewer');
+    fullscreenViewer.classList.remove('active');
+    document.body.style.overflow = ''; // Re-enable scrolling
+}
+
+// Add event listeners for fullscreen viewer
+document.addEventListener('DOMContentLoaded', () => {
+    // Close when clicking the close button
+    const closeButton = document.querySelector('.close-fullscreen');
+    if (closeButton) {
+        closeButton.addEventListener('click', closeFullscreenViewer);
+    }
+    
+    // Close when clicking outside the image
+    const fullscreenViewer = document.getElementById('fullscreen-viewer');
+    if (fullscreenViewer) {
+        fullscreenViewer.addEventListener('click', (e) => {
+            if (e.target === fullscreenViewer) {
+                closeFullscreenViewer();
+            }
+        });
+    }
+    
+    // Close with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && fullscreenViewer.classList.contains('active')) {
+            closeFullscreenViewer();
+        }
+    });
+});
 
 // Function to select all visible cards
 function selectAllVisibleCards() {
