@@ -79,6 +79,57 @@ header h1 {
     background: linear-gradient(135deg, #fd79a8, #6c5ce7);
 }
 
+/* Card action buttons */
+.card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.exclude-export-button {
+    background: rgba(255, 71, 87, 0.1);
+    color: #ff4757;
+    border: 1px solid rgba(255, 71, 87, 0.3);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.exclude-export-button:hover {
+    background: rgba(255, 71, 87, 0.2);
+}
+
+.exclude-export-button.excluded {
+    background: rgba(255, 71, 87, 0.3);
+    color: #ff8e9e;
+}
+
+/* Style for excluded cards */
+.texture-card.excluded {
+    opacity: 0.6;
+    position: relative;
+    border: 2px dashed #ff4757;
+}
+
+.texture-card.excluded::after {
+    content: "EXCLUDED";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 71, 87, 0.9);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
 /* New: Styles for the multi-select action container */
 .multi-select-actions {
     display: flex; /* Hidden by default in HTML, shown by JS */

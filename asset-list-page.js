@@ -47,6 +47,16 @@ function createAndAppendCard(asset) {
     card.style.visibility = 'visible';
     card.style.opacity = '1';
 
+    // Initialize excluded state if not set
+    if (asset.excluded === undefined) {
+        asset.excluded = false;
+    }
+    
+    // Update card class based on excluded state
+    if (asset.excluded) {
+        card.classList.add('excluded');
+    }
+
     // Store a reference to the card DOM element on the asset object
     asset.cardElement = card;
 
@@ -91,7 +101,38 @@ window.createAndAppendCard = createAndAppendCard; // NEW: Expose globally
 
         // Create a wrapper for the action buttons to manage their layout
         const mp3ButtonsWrapper = document.createElement('div');
-        mp3ButtonsWrapper.className = 'mp3-buttons-wrapper'; // New class for this wrapper
+        mp3ButtonsWrapper.className = 'mp3-buttons-wrapper card-actions'; // Added card-actions class for consistent styling
+        
+        // Add Exclude from Export button
+        const excludeButton = document.createElement('button');
+        excludeButton.className = `exclude-export-button ${asset.excluded ? 'excluded' : ''}`;
+        excludeButton.innerHTML = `
+            <i class="fas fa-ban"></i>
+            <span>${asset.excluded ? 'Included' : 'Exclude'}</span>
+        `;
+        excludeButton.onclick = (event) => {
+            event.stopPropagation();
+            asset.excluded = !asset.excluded;
+            
+            // Update button text and class
+            const icon = excludeButton.querySelector('i');
+            const text = excludeButton.querySelector('span');
+            
+            if (asset.excluded) {
+                excludeButton.classList.add('excluded');
+                icon.className = 'fas fa-check';
+                text.textContent = 'Included';
+                card.classList.add('excluded');
+            } else {
+                excludeButton.classList.remove('excluded');
+                icon.className = 'fas fa-ban';
+                text.textContent = 'Exclude';
+                card.classList.remove('excluded');
+            }
+        };
+        
+        // Add the exclude button to the MP3 card
+        mp3ButtonsWrapper.appendChild(excludeButton);
 
         const copyFolderButton = document.createElement('button');
         copyFolderButton.className = 'copy-folder-button';
@@ -196,16 +237,47 @@ window.createAndAppendCard = createAndAppendCard; // NEW: Expose globally
         // Create buttons container for non-MP3s
         const actionButtonsContainer = document.createElement('div');
         actionButtonsContainer.className = 'buttons-container';
-
-        // New "Edit Asset" button
+        
+        // Create card actions container
+        const cardActions = document.createElement('div');
+        cardActions.className = 'card-actions';
+        
+        // Add Exclude from Export button
+        const excludeButton = document.createElement('button');
+        excludeButton.className = `exclude-export-button ${asset.excluded ? 'excluded' : ''}`;
+        excludeButton.innerHTML = `
+            <i class="fas ${asset.excluded ? 'fa-check' : 'fa-ban'}"></i>
+            <span>${asset.excluded ? 'Included' : 'Exclude'}</span>
+        `;
+        excludeButton.onclick = (event) => {
+            event.stopPropagation();
+            asset.excluded = !asset.excluded;
+            
+            // Update button text and class
+            const icon = excludeButton.querySelector('i');
+            const text = excludeButton.querySelector('span');
+            
+            if (asset.excluded) {
+                excludeButton.classList.add('excluded');
+                icon.className = 'fas fa-check';
+                text.textContent = 'Included';
+                card.classList.add('excluded');
+            } else {
+                excludeButton.classList.remove('excluded');
+                icon.className = 'fas fa-ban';
+                text.textContent = 'Exclude';
+                card.classList.remove('excluded');
+            }
+        };
+        cardActions.appendChild(excludeButton);
+        
+        // Add Edit Asset button
         const editAssetButton = document.createElement('button');
         editAssetButton.className = 'edit-asset-button';
         editAssetButton.textContent = 'Edit Asset';
         editAssetButton.onclick = (event) => {
-            event.stopPropagation(); // Prevent card selection when clicking edit button
-            // Call the modal function from asset-editor-modal.js
-            // Pass the entire asset object reference and the card element for in-memory modification and visual update
-            // Only open if multi-select mode is NOT active
+            event.stopPropagation();
+            
             if (typeof window.isMultiSelectModeActive === 'function' && !window.isMultiSelectModeActive()) {
                 if (typeof window.openAssetEditorModal === 'function') {
                     window.openAssetEditorModal(asset, card);
@@ -249,6 +321,7 @@ window.createAndAppendCard = createAndAppendCard; // NEW: Expose globally
         };
         actionButtonsContainer.appendChild(downloadButton);
 
+        actionButtonsContainer.appendChild(cardActions);
         infoContainer.appendChild(actionButtonsContainer);
         card.appendChild(infoContainer); // Append infoContainer for non-MP3s
     }
