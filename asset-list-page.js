@@ -187,36 +187,6 @@ window.createAndAppendCard = createAndAppendCard; // NEW: Expose globally
         };
         mediaContainer.appendChild(mediaElement);
         card.appendChild(mediaContainer); // Append mediaContainer for non-MP3s
-        
-        // Add click handler to the card for selection
-        card.addEventListener('click', (e) => {
-            console.log('Card clicked');
-            // If in multi-select mode, handle selection
-            if (typeof window.isMultiSelectModeActive === 'function') {
-                const isActive = window.isMultiSelectModeActive();
-                console.log('Multi-select mode active:', isActive);
-                if (isActive) {
-                    e.stopPropagation();
-                    if (typeof window.toggleAssetSelection === 'function') {
-                        console.log('Calling toggleAssetSelection for asset:', asset.filename);
-                        window.toggleAssetSelection(asset, card);
-                    } else {
-                        console.error('toggleAssetSelection function not found');
-                    }
-                }
-            } else {
-                console.error('isMultiSelectModeActive function not found');
-            }
-        });
-        
-        // Add click handler to the media container for fullscreen
-        mediaContainer.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Only show fullscreen if not in multi-select mode
-            if (typeof window.isMultiSelectModeActive === 'function' && !window.isMultiSelectModeActive()) {
-                showFullscreenImage(asset);
-            }
-        });
 
         // Create info container
         const infoContainer = document.createElement('div');
