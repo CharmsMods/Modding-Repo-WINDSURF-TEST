@@ -1,7 +1,7 @@
 /* export-options-popup.css */
 
 /* Export Options Overlay */
-.export-options-overlay {
+.modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -19,7 +19,7 @@
     transition: visibility 0.3s ease, opacity 0.3s ease;
 }
 
-.export-options-overlay.active {
+.modal-overlay.active {
     visibility: visible;
     opacity: 1;
 }
@@ -200,13 +200,47 @@
 .btn {
     padding: 10px 20px;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     font-size: 14px;
-    min-width: 120px;
-    text-align: center;
+}
+
+.btn-primary {
+    background-color: #6c5ce7;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #5a4cd4;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background-color: #4a4a4a;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a5a5a;
+    transform: translateY(-1px);
+}
+
+.btn-cancel {
+    background-color: transparent;
+    color: #999;
+}
+
+.btn-cancel:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
 .btn-primary {
@@ -250,7 +284,7 @@
 }
 
 /* Close Button */
-.close-export-popup-button {
+#close-export-popup {
     position: absolute;
     top: 1rem;
     right: 1.5rem;
