@@ -11,12 +11,14 @@
 
 // export-options-popup.js
 
-// DOM Elements
-let exportOptionsPopup;
-let closeExportPopupButton;
-let exportClientButton;
-let exportBrowserButton;
-let compressionLevelSelect;
+// DOM Elements - use var to allow multiple declarations or check if already declared
+if (typeof exportOptionsPopup === 'undefined') {
+    var exportOptionsPopup;
+    var closeExportPopupButton;
+    var exportClientButton;
+    var exportBrowserButton;
+    var compressionLevelSelect;
+}
 
 // Default compression level (1-9)
 let currentCompressionLevel = 6;
