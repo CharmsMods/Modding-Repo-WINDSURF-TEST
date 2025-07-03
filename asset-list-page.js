@@ -564,7 +564,18 @@ async function loadAllAssetsIntoMemory() {
     }
 
     window.showLoadingOverlay('Loading Textures into Memory...');
-    const imageAssets = allAssets.filter(asset => asset.type === 'png' || asset.type === 'jpg');
+    // Only load non-excluded image assets into memory
+    const imageAssets = allAssets.filter(asset => 
+        (asset.type === 'png' || asset.type === 'jpg') && !asset.excluded
+    );
+    
+    // Log how many assets we're loading vs skipping
+    const excludedCount = allAssets.filter(asset => 
+        (asset.type === 'png' || asset.type === 'jpg') && asset.excluded
+    ).length;
+    
+    window.updateConsoleLog(`Loading ${imageAssets.length} textures (${excludedCount} excluded)`);
+    
     let processedCount = 0;
     const totalImageFiles = imageAssets.length;
 
