@@ -16,15 +16,88 @@ let exportOptionsPopup;
 let closeExportPopupButton;
 let exportClientButton;
 let exportBrowserButton;
+let compressionLevelSelect;
+
+// Default compression level (1-9)
+let currentCompressionLevel = 6;
 
 // Initialize DOM elements when the document is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Create the popup HTML if it doesn't exist
+    if (!document.getElementById('export-options-popup')) {
+        const popupHTML = `
+        <div id="export-options-popup" class="modal-overlay">
+            <div class="export-options-content">
+                <h2>Export Options</h2>
+                <div class="compression-options">
+                    <div class="form-group">
+                        <label for="compression-level">Compression Level:</label>
+                        <select id="compression-level" class="form-control">
+                            <option value="1">Fastest (Lowest compression)</option>
+                            <option value="3">Fast</option>
+                            <option value="6" selected>Balanced (Recommended)</option>
+                            <option value="9">Best (Slowest compression)</option>
+                        </select>
+                        <div class="help-text">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="tooltip">Higher compression = smaller file size but slower export</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="use-web-worker" checked>
+                            <span class="checkmark"></span>
+                            Use Web Worker (recommended)
+                        </label>
+                        <div class="help-text">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="tooltip">Process in background to prevent UI freezing</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="export-buttons">
+                    <button id="export-client-button" class="btn btn-primary">Export for Client</button>
+                    <button id="export-browser-button" class="btn btn-secondary">Export for Browser</button>
+                    <button id="close-export-popup" class="btn btn-cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', popupHTML);
+    }
+
+    // Initialize elements
     exportOptionsPopup = document.getElementById('export-options-popup');
     closeExportPopupButton = document.getElementById('close-export-popup');
     exportClientButton = document.getElementById('export-client-button');
     exportBrowserButton = document.getElementById('export-browser-button');
+    compressionLevelSelect = document.getElementById('compression-level');
+    const useWebWorkerCheckbox = document.getElementById('use-web-worker');
 
-    if (exportOptionsPopup && closeExportPopupButton && exportClientButton && exportBrowserButton) {
+    // Load saved settings
+    const savedCompression = localStorage.getItem('exportCompressionLevel');
+    const savedUseWorker = localStorage.getItem('useWebWorker');
+    
+    if (savedCompression) {
+        compressionLevelSelect.value = savedCompression;
+        currentCompressionLevel = parseInt(savedCompression, 10);
+    }
+    
+    if (savedUseWorker !== null) {
+        useWebWorkerCheckbox.checked = savedUseWorker === 'true';
+    }
+
+    // Save settings when changed
+    compressionLevelSelect.addEventListener('change', (e) => {
+        currentCompressionLevel = parseInt(e.target.value, 10);
+        localStorage.setItem('exportCompressionLevel', currentCompressionLevel);
+    });
+
+    useWebWorkerCheckbox.addEventListener('change', (e) => {
+        localStorage.setItem('useWebWorker', e.target.checked);
+    });
+
+    if (exportOptionsPopup && closeExportPopupButton && exportClientButton && exportBrowserButton && compressionLevelSelect) {
         // Event listeners for closing the popup
         closeExportPopupButton.addEventListener('click', hideExportOptionsPopup);
         
@@ -44,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!closeExportPopupButton) missingElements.push('close-export-popup');
         if (!exportClientButton) missingElements.push('export-client-button');
         if (!exportBrowserButton) missingElements.push('export-browser-button');
+        if (!compressionLevelSelect) missingElements.push('compression-level');
         
         const errorMsg = `Missing required DOM elements: ${missingElements.join(', ')}`;
         console.error(errorMsg);
