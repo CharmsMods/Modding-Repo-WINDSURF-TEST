@@ -134,18 +134,37 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 async function handleExportButtonClick(exportType) {
     try {
+        console.log('Export button clicked, type:', exportType);
+        
         if (typeof window.initiateZipDownload !== 'function') {
             throw new Error('Export functionality not initialized. Please refresh the page.');
         }
         
+        console.log('Calling initiateZipDownload...');
         hideExportOptionsPopup();
+        
+        // Show loading overlay
+        if (window.showLoadingOverlay) {
+            window.showLoadingOverlay('Preparing export...');
+        }
+        
         await window.initiateZipDownload(exportType);
+        console.log('Export completed successfully');
     } catch (error) {
         console.error('Export failed:', error);
         if (window.updateConsoleLog) {
             window.updateConsoleLog(`[ERROR] Export failed: ${error.message}`);
+            window.updateConsoleLog(error.stack);
+        } else {
+            console.error('Stack trace:', error.stack);
         }
-        alert(`Export failed: ${error.message}`);
+        
+        // Hide loading overlay if visible
+        if (window.hideLoadingOverlayWithDelay) {
+            window.hideLoadingOverlayWithDelay(3000, 'Export failed!');
+        } else {
+            alert(`Export failed: ${error.message}`);
+        }
     }
 }
 

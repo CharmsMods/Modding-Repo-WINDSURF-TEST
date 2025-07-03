@@ -904,15 +904,53 @@ async function processInMainThread(files, compressionLevel, exportType) {
  * @returns {Promise<void>}
  * @throws {Error} If there's an error during ZIP generation
  */
-async function initiateZipDownload(exportType) {
-    if (!exportType || !['client', 'browser'].includes(exportType)) {
-        throw new Error('Invalid export type. Must be either "client" or "browser".');
+// Debug function to check if required libraries are loaded
+function checkRequiredLibraries() {
+    const missingLibs = [];
+    
+    if (typeof JSZip === 'undefined') {
+        missingLibs.push('JSZip');
     }
-    hideExportOptionsPopup();
+    
+    if (typeof saveAs === 'undefined') {
+        missingLibs.push('FileSaver.js');
+    }
+    
+    if (missingLibs.length > 0) {
+        const error = new Error(`Missing required libraries: ${missingLibs.join(', ')}`);
+        console.error('Missing libraries:', missingLibs);
+        throw error;
+    }
+}
+
+async function initiateZipDownload(exportType) {
+    console.log('initiateZipDownload called with type:', exportType);
+    
+    // Check for required libraries
+    try {
+        checkRequiredLibraries();
+    } catch (error) {
+        console.error('Library check failed:', error);
+        throw error;
+    }
+    
+    if (!exportType || !['client', 'browser'].includes(exportType)) {
+        const error = new Error('Invalid export type. Must be either "client" or "browser".');
+        console.error('Invalid export type:', exportType);
+        throw error;
+    }
+    
+    try {
+        hideExportOptionsPopup();
+    } catch (error) {
+        console.warn('Error hiding export options popup:', error);
+    }
 
     // Get compression level and web worker preference
-    const compressionLevel = parseInt(document.getElementById('compression-level').value, 10) || 6;
-    const useWebWorker = document.getElementById('use-web-worker').checked;
+    const compressionLevel = parseInt(document.getElementById('compression-level')?.value, 10) || 6;
+    const useWebWorker = document.getElementById('use-web-worker')?.checked ?? true;
+    
+    console.log('Export settings:', { compressionLevel, useWebWorker });
 
     // Filter out excluded assets
     const filteredAssets = window.allAssets.filter(asset => !asset.excluded);
