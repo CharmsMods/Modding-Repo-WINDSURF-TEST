@@ -52,6 +52,9 @@ function createAndAppendCard(asset) {
         asset.excluded = false;
     }
     
+    // Debug: Log the excluded state when card is created
+    console.log(`Card created for ${asset.filename}: excluded = ${asset.excluded}`);
+    
     // Update card class based on excluded state
     if (asset.excluded) {
         card.classList.add('excluded');
@@ -738,11 +741,9 @@ async function initiateZipDownload(exportType) {
     downloadAllZipButton.disabled = true;
 
     let filesProcessed = 0;
-    // Filter out excluded assets before processing
-    const filteredAssets = allAssets.filter(asset => !asset.excluded);
-    const totalFiles = filteredAssets.length;
+    const totalFiles = allAssets.length; // Now includes all assets, image and mp3
 
-    const zipPromises = filteredAssets.map(async (asset) => {
+    const zipPromises = allAssets.map(async (asset) => {
         const { folder, filename, type, originalImageBlob, modifiedImageBlob, newImageBlob, isModified, isNew } = asset;
         let fileBlobToZip = null;
         let fileNameToZip = filename; // Default to original filename

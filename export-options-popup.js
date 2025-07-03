@@ -68,8 +68,19 @@ async function handleExport(exportType) {
     }
 
     const zip = new JSZip();
-    // Filter out excluded assets
-    const assetsToExport = window.allAssets ? window.allAssets.filter(asset => !asset.excluded) : [];
+    
+    // Debug: Log the current state of allAssets
+    console.log('All assets before filtering:', window.allAssets);
+    
+    // Filter out excluded assets and ensure we have a valid array
+    const assetsToExport = Array.isArray(window.allAssets) 
+        ? window.allAssets.filter(asset => {
+            const isExcluded = !!asset.excluded;
+            console.log(`Asset ${asset.filename} - excluded: ${isExcluded}`, asset);
+            return !isExcluded;
+        })
+        : [];
+        
     const totalAssets = assetsToExport.length;
     let processedCount = 0;
 

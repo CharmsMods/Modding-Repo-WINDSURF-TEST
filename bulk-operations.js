@@ -655,16 +655,20 @@ function toggleExcludeSelected() {
         alert('No assets selected to exclude.');
         return;
     }
-
-    // Determine if we're excluding or including (if any selected asset is not excluded, we'll exclude all)
+    
+    // Check if any selected assets are not excluded
     const anyIncluded = Array.from(selectedAssets).some(asset => !asset.excluded);
-    const newExcludedState = anyIncluded;
-
+    const newExcludedState = anyIncluded; // Will be true if any are included, false if all are excluded
+    
     // Update all selected assets
     selectedAssets.forEach(asset => {
+        // Store the previous state for logging
+        const wasExcluded = asset.excluded;
+        
+        // Update the excluded state
         asset.excluded = newExcludedState;
         
-        // Update the card's visual state
+        // Update the UI
         if (asset.cardElement) {
             if (newExcludedState) {
                 asset.cardElement.classList.add('excluded');
@@ -672,21 +676,25 @@ function toggleExcludeSelected() {
                 asset.cardElement.classList.remove('excluded');
             }
         }
+        
+        // Debug log for each asset's state change
+        console.log(`Asset ${asset.filename}: excluded changed from ${wasExcluded} to ${newExcludedState}`, asset);
     });
-
-    // Update the button text based on the action
+    
+    // Update the UI feedback
     const action = newExcludedState ? 'Excluded' : 'Included';
     const count = selectedAssets.size;
-    
-    // Show a temporary message
     const originalText = toggleExcludeButton.textContent;
+    
+    // Update button text
     toggleExcludeButton.textContent = `${action} ${count} asset${count > 1 ? 's' : ''}`;
     
     // Log the action
-    console.log(`${action} ${count} asset${count > 1 ? 's' : ''} from export`);
-    window.updateConsoleLog(`${action} ${count} asset${count > 1 ? 's' : ''} from export`);
+    const logMessage = `${action} ${count} asset${count > 1 ? 's' : ''} from export`;
+    console.log(logMessage);
+    window.updateConsoleLog(logMessage);
     
-    // Reset the button text after a delay
+    // Reset button text after delay
     setTimeout(() => {
         toggleExcludeButton.textContent = originalText;
     }, 2000);
@@ -695,6 +703,9 @@ function toggleExcludeSelected() {
     setTimeout(() => {
         closeBulkOperationsModal();
     }, 1500);
+    
+    // Debug: Log the current state of allAssets
+    console.log('Current allAssets state after exclusion:', window.allAssets);
 }
 
 /**
