@@ -445,6 +445,7 @@ async function initializeGallery() {
                     if (folder && filename) {
                         const mediaPath = `./mod-assets/png/${filename}`;
                         allAssets.push({
+                            id: `png_${folder}_${filename}`, // Create a unique ID
                             folder,
                             filename,
                             type: 'png',
@@ -453,7 +454,8 @@ async function initializeGallery() {
                             modifiedImageBlob: null,
                             newImageBlob: null,
                             isModified: false,
-                            isNew: false
+                            isNew: false,
+                            excluded: false // Will be updated by loadExcludedState
                         });
                     }
                 }
@@ -480,12 +482,14 @@ async function initializeGallery() {
                     if (folder && filename) {
                         const mediaPath = `./mod-assets/jpg/${filename}`;
                         allAssets.push({
+                            id: `jpg_${folder}_${filename}`, // Create a unique ID
                             folder,
                             filename,
                             type: 'jpg',
                             mediaPath,
                             originalImageBlob: null, // Blob will be loaded later
                             modifiedImageBlob: null,
+                            excluded: false, // Will be updated by loadExcludedState
                             newImageBlob: null,
                             isModified: false,
                             isNew: false
@@ -515,6 +519,7 @@ async function initializeGallery() {
                     if (folder && filename) {
                         const mediaPath = `./mod-assets/mp3/${filename}`;
                         allAssets.push({
+                            id: `mp3_${folder}_${filename}`, // Create a unique ID
                             folder,
                             filename,
                             type: 'mp3',
@@ -523,7 +528,8 @@ async function initializeGallery() {
                             modifiedImageBlob: null,
                             newImageBlob: null,
                             isModified: false,
-                            isNew: false
+                            isNew: false,
+                            excluded: false // Will be updated by loadExcludedState
                         });
                     }
                 }
@@ -538,6 +544,9 @@ async function initializeGallery() {
         // Wait for all asset lists to be loaded
         await Promise.all(listFetchPromises);
         window.updateConsoleLog('\nAll asset lists loaded. Sorting and displaying gallery...');
+
+        // Load excluded state from localStorage after all assets are loaded
+        loadExcludedState();
 
         // Sort allAssets array alphabetically by filename BEFORE creating cards
         allAssets.sort((a, b) => a.filename.localeCompare(b.filename));
@@ -716,6 +725,52 @@ function hideExportOptionsPopup() {
 }
 
 
+// --- Utility Functions ---
+
+/**
+ * Saves the excluded state of assets to localStorage.
+ */
+window.saveExcludedState = function() {
+    const excludedState = {};
+    if (window.allAssets && window.allAssets.length > 0) {
+        window.allAssets.forEach(asset => {
+            if (asset.id) {
+                excludedState[asset.id] = asset.excluded === true;
+            }
+        });
+        localStorage.setItem('assetExcludedState', JSON.stringify(excludedState));
+    }
+}
+
+/**
+ * Loads the excluded state of assets from localStorage and applies it.
+ */
+window.loadExcludedState = function() {
+    try {
+        const savedState = localStorage.getItem('assetExcludedState');
+        if (savedState) {
+            const excludedState = JSON.parse(savedState);
+            if (window.allAssets && window.allAssets.length > 0) {
+                window.allAssets.forEach(asset => {
+                    if (asset.id && excludedState.hasOwnProperty(asset.id)) {
+                        asset.excluded = excludedState[asset.id];
+                        // Update UI if card element exists
+                        if (asset.cardElement) {
+                            if (asset.excluded) {
+                                asset.cardElement.classList.add('excluded');
+                            } else {
+                                asset.cardElement.classList.remove('excluded');
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading excluded state:', error);
+    }
+}
+
 // --- ZIP Download Functionality with Progress ---
 
 /**
@@ -810,14 +865,20 @@ async function initiateZipDownload(exportType) {
     downloadAllZipButton.textContent = 'Preparing ZIP...';
     downloadAllZipButton.disabled = true;
 
-    // Use the pre-filtered assets
+    // Use the pre-filtered assets (already filtered to exclude excluded assets)
     let filesProcessed = 0;
     const totalFiles = filteredAssets.length;
     
-    // Process only the filtered assets (non-excluded)
-    const zipPromises = filteredAssets
-        .filter(asset => !asset.excluded) // Double-check exclusion here as a safeguard
-        .map(async (asset) => {
+    if (totalFiles === 0) {
+        const message = 'No assets to export after filtering excluded assets!';
+        console.warn(message);
+        window.updateConsoleLog(`[WARNING] ${message}`);
+        window.hideLoadingOverlayWithDelay(1000, message);
+        return;
+    }
+    
+    // Process the filtered assets (non-excluded)
+    const zipPromises = filteredAssets.map(async (asset) => {
         const { folder, filename, type, originalImageBlob, modifiedImageBlob, newImageBlob, isModified, isNew } = asset;
         let fileBlobToZip = null;
         let fileNameToZip = filename; // Default to original filename

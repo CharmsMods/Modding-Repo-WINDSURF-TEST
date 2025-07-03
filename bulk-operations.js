@@ -678,13 +678,19 @@ function toggleExcludeSelected() {
     const anyIncluded = Array.from(selectedAssets).some(asset => !asset.excluded);
     const newExcludedState = anyIncluded; // Will be true if any are included, false if all are excluded
     
-    // Update all selected assets
+    // Update all selected assets in both selectedAssets and the global allAssets
     selectedAssets.forEach(asset => {
         // Store the previous state for logging
         const wasExcluded = asset.excluded;
         
-        // Update the excluded state
+        // Update the excluded state in the selected asset
         asset.excluded = newExcludedState;
+        
+        // Also update the asset in the global allAssets array
+        const globalAssetIndex = window.allAssets.findIndex(a => a.id === asset.id);
+        if (globalAssetIndex !== -1) {
+            window.allAssets[globalAssetIndex].excluded = newExcludedState;
+        }
         
         // Update the UI
         if (asset.cardElement) {
@@ -698,6 +704,11 @@ function toggleExcludeSelected() {
         // Debug log for each asset's state change
         console.log(`Asset ${asset.filename}: excluded changed from ${wasExcluded} to ${newExcludedState}`, asset);
     });
+    
+    // Save the excluded state to localStorage
+    if (window.saveExcludedState && typeof window.saveExcludedState === 'function') {
+        window.saveExcludedState();
+    }
     
     // Update the UI feedback
     const action = newExcludedState ? 'Excluded' : 'Included';

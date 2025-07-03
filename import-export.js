@@ -136,6 +136,10 @@ async function processImportedAssets(importedData) {
                 existingAsset.mediaPath = URL.createObjectURL(blobToApply);
                 existingAsset.isModified = true; // Mark as modified on import
                 existingAsset.isNew = false; // It's an existing asset, not new
+                // Ensure excluded property exists
+                if (existingAsset.excluded === undefined) {
+                    existingAsset.excluded = false;
+                }
             } else {
                 // If no blob to apply, revert to original state if it was modified
                 if (existingAsset.isModified || existingAsset.isNew) {
@@ -166,7 +170,8 @@ async function processImportedAssets(importedData) {
                 newImageBlob: null,
                 isModified: false,
                 isNew: true, // This asset is new to the current collection
-                isSelected: false
+                isSelected: false,
+                excluded: false // Ensure excluded is always initialized to false
             };
 
             if (blobToApply) {
