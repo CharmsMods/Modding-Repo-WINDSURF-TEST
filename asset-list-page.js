@@ -738,9 +738,11 @@ async function initiateZipDownload(exportType) {
     downloadAllZipButton.disabled = true;
 
     let filesProcessed = 0;
-    const totalFiles = allAssets.length; // Now includes all assets, image and mp3
+    // Filter out excluded assets before processing
+    const filteredAssets = allAssets.filter(asset => !asset.excluded);
+    const totalFiles = filteredAssets.length;
 
-    const zipPromises = allAssets.map(async (asset) => {
+    const zipPromises = filteredAssets.map(async (asset) => {
         const { folder, filename, type, originalImageBlob, modifiedImageBlob, newImageBlob, isModified, isNew } = asset;
         let fileBlobToZip = null;
         let fileNameToZip = filename; // Default to original filename
