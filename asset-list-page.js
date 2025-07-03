@@ -545,7 +545,7 @@ async function initializeGallery() {
         await Promise.all(listFetchPromises);
         window.updateConsoleLog('\nAll asset lists loaded. Sorting and displaying gallery...');
 
-        // Load excluded state from localStorage after all assets are loaded
+        // Load excluded state from sessionStorage after all assets are loaded
         loadExcludedState();
 
         // Sort allAssets array alphabetically by filename BEFORE creating cards
@@ -728,7 +728,7 @@ function hideExportOptionsPopup() {
 // --- Utility Functions ---
 
 /**
- * Saves the excluded state of assets to localStorage.
+ * Saves the excluded state of assets to sessionStorage.
  */
 window.saveExcludedState = function() {
     const excludedState = {};
@@ -738,16 +738,16 @@ window.saveExcludedState = function() {
                 excludedState[asset.id] = asset.excluded === true;
             }
         });
-        localStorage.setItem('assetExcludedState', JSON.stringify(excludedState));
+        sessionStorage.setItem('assetExcludedState', JSON.stringify(excludedState));
     }
 }
 
 /**
- * Loads the excluded state of assets from localStorage and applies it.
+ * Loads the excluded state of assets from sessionStorage and applies it.
  */
 window.loadExcludedState = function() {
     try {
-        const savedState = localStorage.getItem('assetExcludedState');
+        const savedState = sessionStorage.getItem('assetExcludedState');
         if (savedState) {
             const excludedState = JSON.parse(savedState);
             if (window.allAssets && window.allAssets.length > 0) {

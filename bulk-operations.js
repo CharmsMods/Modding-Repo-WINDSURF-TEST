@@ -705,7 +705,7 @@ function toggleExcludeSelected() {
         console.log(`Asset ${asset.filename}: excluded changed from ${wasExcluded} to ${newExcludedState}`, asset);
     });
     
-    // Save the excluded state to localStorage
+    // Save the excluded state to sessionStorage
     if (window.saveExcludedState && typeof window.saveExcludedState === 'function') {
         window.saveExcludedState();
     }
