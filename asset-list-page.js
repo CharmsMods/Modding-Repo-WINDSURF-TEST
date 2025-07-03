@@ -1005,4 +1005,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!consoleLog) console.error('console-log not found!');
         if (!loadingMessageDisplay) console.error('h2 for loading message not found!');
     }
+    
+    // Expose the initiateZipDownload function globally
+    window.initiateZipDownload = initiateZipDownload;
 });

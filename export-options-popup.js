@@ -33,9 +33,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Event listeners for export options
-        exportClientButton.addEventListener('click', () => handleExport('client'));
-        exportBrowserButton.addEventListener('click', () => handleExport('browser'));
+        // Event listeners for export options - using initiateZipDownload from asset-list-page.js
+        exportClientButton.addEventListener('click', () => {
+            if (window.initiateZipDownload) {
+                window.initiateZipDownload('client');
+            } else {
+                console.error('initiateZipDownload function not found!');
+                alert('Error: Export functionality not available. Please refresh the page and try again.');
+            }
+        });
+        
+        exportBrowserButton.addEventListener('click', () => {
+            if (window.initiateZipDownload) {
+                window.initiateZipDownload('browser');
+            } else {
+                console.error('initiateZipDownload function not found!');
+                alert('Error: Export functionality not available. Please refresh the page and try again.');
+            }
+        });
     } else {
         console.error('One or more export options popup DOM elements not found!');
     }
