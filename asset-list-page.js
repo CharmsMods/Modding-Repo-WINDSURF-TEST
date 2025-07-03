@@ -734,15 +734,31 @@ async function initiateZipDownload(exportType) {
     const filteredAssets = window.allAssets.filter(asset => !asset.excluded);
     
     if (filteredAssets.length === 0) {
-        window.hideLoadingOverlayWithDelay(1000, 'No assets to export - all are excluded!');
+        const message = 'No assets to export - all are excluded!';
+        console.warn(message);
+        window.updateConsoleLog(`[WARNING] ${message}`);
+        window.hideLoadingOverlayWithDelay(1000, message);
         return;
     }
     
-    window.updateConsoleLog(`Exporting ${filteredAssets.length} assets (${window.allAssets.length - filteredAssets.length} excluded)`);
+    const excludedCount = window.allAssets.length - filteredAssets.length;
+    window.updateConsoleLog(`=== Starting Export ===`);
+    window.updateConsoleLog(`Total assets: ${window.allAssets.length}`);
+    window.updateConsoleLog(`Included in export: ${filteredAssets.length}`);
+    window.updateConsoleLog(`Excluded from export: ${excludedCount}`);
+    
+    if (excludedCount > 0) {
+        const excludedAssets = window.allAssets.filter(asset => asset.excluded);
+        window.updateConsoleLog('\nExcluded assets:');
+        excludedAssets.forEach(asset => {
+            window.updateConsoleLog(`- ${asset.filename} (${asset.folder})`);
+        });
+    }
+    window.updateConsoleLog(`====================`);
     
     // Load only non-excluded assets into memory
     if (!assetsLoadedIntoMemory) {
-        window.updateConsoleLog('Loading non-excluded assets into memory...');
+        window.updateConsoleLog('\nLoading non-excluded assets into memory...');
         await loadAllAssetsIntoMemory();
         window.updateConsoleLog('Asset loading complete. Proceeding with ZIP generation.');
     }
@@ -798,8 +814,10 @@ async function initiateZipDownload(exportType) {
     let filesProcessed = 0;
     const totalFiles = filteredAssets.length;
     
-    // Process only the filtered assets
-    const zipPromises = filteredAssets.map(async (asset) => {
+    // Process only the filtered assets (non-excluded)
+    const zipPromises = filteredAssets
+        .filter(asset => !asset.excluded) // Double-check exclusion here as a safeguard
+        .map(async (asset) => {
         const { folder, filename, type, originalImageBlob, modifiedImageBlob, newImageBlob, isModified, isNew } = asset;
         let fileBlobToZip = null;
         let fileNameToZip = filename; // Default to original filename
