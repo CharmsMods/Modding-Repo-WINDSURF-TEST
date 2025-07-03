@@ -740,10 +740,22 @@ async function initiateZipDownload(exportType) {
     downloadAllZipButton.textContent = 'Preparing ZIP...';
     downloadAllZipButton.disabled = true;
 
+    // Filter out excluded assets before processing
+    const assetsToExport = allAssets.filter(asset => !asset.excluded);
     let filesProcessed = 0;
-    const totalFiles = allAssets.length; // Now includes all assets, image and mp3
-
-    const zipPromises = allAssets.map(async (asset) => {
+    const totalFiles = assetsToExport.length;
+    
+    if (totalFiles === 0) {
+        window.hideLoadingOverlayWithDelay(1000, 'No assets to export - all are excluded!');
+        return;
+    }
+    
+    // Log how many assets are being included/excluded
+    const excludedCount = allAssets.length - totalFiles;
+    window.updateConsoleLog(`Including ${totalFiles} assets in export (${excludedCount} excluded)`);
+    
+    // Only process non-excluded assets
+    const zipPromises = assetsToExport.map(async (asset) => {
         const { folder, filename, type, originalImageBlob, modifiedImageBlob, newImageBlob, isModified, isNew } = asset;
         let fileBlobToZip = null;
         let fileNameToZip = filename; // Default to original filename
