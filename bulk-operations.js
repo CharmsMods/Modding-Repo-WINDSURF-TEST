@@ -12,9 +12,17 @@
 // bulk-operations.js
 // This file handles multi-selection mode and bulk operations on assets.
 
-// Global state variables
+/**
+ * Tracks whether multi-select mode is currently active.
+ * @type {boolean}
+ */
 let isMultiSelectMode = false;
-const selectedAssets = new Set(); // Stores references to asset objects (from allAssets array)
+
+/**
+ * Set of currently selected asset objects.
+ * @type {Set<Object>}
+ */
+const selectedAssets = new Set();
 
 // DOM Elements
 let toggleMultiSelectButton;
@@ -650,9 +658,19 @@ async function applyBulkUploadedTexture() {
 /**
  * Toggles the excluded state of all currently selected assets
  */
+/**
+ * Toggles the excluded state of all currently selected assets.
+ * Updates both the UI and the underlying asset data.
+ * @returns {void}
+ */
 function toggleExcludeSelected() {
     if (selectedAssets.size === 0) {
-        alert('No assets selected to exclude.');
+        const errorMsg = 'No assets selected to exclude.';
+        console.warn(errorMsg);
+        if (window.updateConsoleLog) {
+            window.updateConsoleLog(`[WARNING] ${errorMsg}`);
+        }
+        alert(errorMsg);
         return;
     }
     

@@ -14,11 +14,18 @@ let searchInput;
 let allCards; // This declares it
 window.allCards = allCards; // NEW: Expose globally
 
-// Store a global list of all assets fetched to be used for zipping and bulk operations
-// Each asset object will now also store its Blob data and modification status.
-const allAssets = []; // This declares it
-window.allAssets = allAssets; // NEW: Expose allAssets globally
-let assetsLoadedIntoMemory = false; // Existing flag: true when image blobs are loaded for all assets
+/**
+ * Global list of all assets with their metadata and blob data.
+ * @type {Array<Object>}
+ */
+const allAssets = [];
+window.allAssets = allAssets;
+
+/**
+ * Flag indicating if all assets have been loaded into memory.
+ * @type {boolean}
+ */
+let assetsLoadedIntoMemory = false;
 
 
 // DOM elements for loading/progress
@@ -554,8 +561,10 @@ async function initializeGallery() {
 }
 
 /**
- * Loads all image asset blobs into memory (png and jpg files only).
- * Displays a progress bar during this operation.
+ * Loads all image asset blobs into memory (PNG and JPG files only).
+ * Displays a progress bar during the operation.
+ * @returns {Promise<void>}
+ * @throws {Error} If there's an error loading assets
  */
 async function loadAllAssetsIntoMemory() {
     if (assetsLoadedIntoMemory) {
@@ -574,7 +583,23 @@ async function loadAllAssetsIntoMemory() {
         (asset.type === 'png' || asset.type === 'jpg') && asset.excluded
     ).length;
     
-    window.updateConsoleLog(`Loading ${imageAssets.length} textures (${excludedCount} excluded)`);
+    // Log detailed info about included/excluded assets
+    window.updateConsoleLog(`=== Asset Loading Summary ===`);
+    window.updateConsoleLog(`Total assets: ${allAssets.length}`);
+    window.updateConsoleLog(`Included (non-excluded) images: ${imageAssets.length}`);
+    window.updateConsoleLog(`Excluded images: ${excludedCount}`);
+    window.updateConsoleLog(`===========================`);
+    
+    // Debug: Log excluded assets
+    if (excludedCount > 0) {
+        const excludedAssets = allAssets.filter(asset => 
+            (asset.type === 'png' || asset.type === 'jpg') && asset.excluded
+        );
+        window.updateConsoleLog('Excluded assets:');
+        excludedAssets.forEach(asset => {
+            window.updateConsoleLog(`- ${asset.filename} (Folder: ${asset.folder})`);
+        });
+    }
     
     let processedCount = 0;
     const totalImageFiles = imageAssets.length;
@@ -693,15 +718,33 @@ function hideExportOptionsPopup() {
 
 // --- ZIP Download Functionality with Progress ---
 
-// Modified ZIP generation function to accept exportType
+/**
+ * Initiates the ZIP download process for the specified export type.
+ * @param {'client'|'browser'} exportType - The type of export to perform
+ * @returns {Promise<void>}
+ * @throws {Error} If there's an error during ZIP generation
+ */
 async function initiateZipDownload(exportType) {
+    if (!exportType || !['client', 'browser'].includes(exportType)) {
+        throw new Error('Invalid export type. Must be either "client" or "browser".');
+    }
     hideExportOptionsPopup(); // Hide the options popup immediately
 
-    // Step 1: Ensure all image assets are loaded into memory first
+    // Filter out excluded assets first
+    const filteredAssets = window.allAssets.filter(asset => !asset.excluded);
+    
+    if (filteredAssets.length === 0) {
+        window.hideLoadingOverlayWithDelay(1000, 'No assets to export - all are excluded!');
+        return;
+    }
+    
+    window.updateConsoleLog(`Exporting ${filteredAssets.length} assets (${window.allAssets.length - filteredAssets.length} excluded)`);
+    
+    // Load only non-excluded assets into memory
     if (!assetsLoadedIntoMemory) {
-        window.updateConsoleLog('Assets not yet loaded into memory. Starting texture pre-loading...');
-        await loadAllAssetsIntoMemory(); // Wait for textures to load
-        window.updateConsoleLog('Texture pre-loading complete. Proceeding with ZIP generation.');
+        window.updateConsoleLog('Loading non-excluded assets into memory...');
+        await loadAllAssetsIntoMemory();
+        window.updateConsoleLog('Asset loading complete. Proceeding with ZIP generation.');
     }
 
     window.showLoadingOverlay(`Generating ZIP (${exportType.charAt(0).toUpperCase() + exportType.slice(1)} Export)...`);
@@ -751,22 +794,12 @@ async function initiateZipDownload(exportType) {
     downloadAllZipButton.textContent = 'Preparing ZIP...';
     downloadAllZipButton.disabled = true;
 
-    // Filter out excluded assets before processing
-    const assetsToExport = allAssets.filter(asset => !asset.excluded);
+    // Use the pre-filtered assets
     let filesProcessed = 0;
-    const totalFiles = assetsToExport.length;
+    const totalFiles = filteredAssets.length;
     
-    if (totalFiles === 0) {
-        window.hideLoadingOverlayWithDelay(1000, 'No assets to export - all are excluded!');
-        return;
-    }
-    
-    // Log how many assets are being included/excluded
-    const excludedCount = allAssets.length - totalFiles;
-    window.updateConsoleLog(`Including ${totalFiles} assets in export (${excludedCount} excluded)`);
-    
-    // Only process non-excluded assets
-    const zipPromises = assetsToExport.map(async (asset) => {
+    // Process only the filtered assets
+    const zipPromises = filteredAssets.map(async (asset) => {
         const { folder, filename, type, originalImageBlob, modifiedImageBlob, newImageBlob, isModified, isNew } = asset;
         let fileBlobToZip = null;
         let fileNameToZip = filename; // Default to original filename
