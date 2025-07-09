@@ -101,11 +101,31 @@ window.showCompressionLevelPopup = (exportType) => {
     console.log('=== showCompressionLevelPopup START ===');
     console.log('Export type:', exportType);
     
+    // Debug: Log the current state of the window object
+    console.log('Window object has showCompressionLevelPopup:', 'showCompressionLevelPopup' in window);
+    
     // Re-find the popup element in case it wasn't found during initial load
     if (!compressionLevelPopup) {
         console.log('Popup element not found in memory, querying DOM...');
         compressionLevelPopup = document.getElementById('compression-level-popup');
         console.log('Re-queried compressionLevelPopup:', compressionLevelPopup ? 'Found' : 'Not found');
+        
+        // If still not found, search the entire document
+        if (!compressionLevelPopup) {
+            console.log('Searching for any element with id containing "compression"...');
+            const allElements = document.querySelectorAll('*');
+            const compressionElements = [];
+            allElements.forEach(el => {
+                if (el.id && el.id.includes('compression')) {
+                    compressionElements.push({
+                        id: el.id,
+                        tagName: el.tagName,
+                        className: el.className
+                    });
+                }
+            });
+            console.log('Elements with "compression" in ID:', compressionElements);
+        }
     }
     
     if (!compressionLevelPopup) {
@@ -127,48 +147,134 @@ window.showCompressionLevelPopup = (exportType) => {
     console.log('Stored export type:', pendingExportType);
     
     // Show the popup
-    console.log('Showing compression level popup');
+    console.log('=== DEBUG: Showing compression level popup ===');
     
     // Debug: Check current state before showing
     console.log('Before showing popup:');
-    console.log('- compressionLevelPopup:', compressionLevelPopup);
-    console.log('- Current classList:', compressionLevelPopup.classList);
-    console.log('- Current display style:', window.getComputedStyle(compressionLevelPopup).display);
+    console.log('- compressionLevelPopup element exists:', !!compressionLevelPopup);
+    if (compressionLevelPopup) {
+        console.log('- Current classList:', compressionLevelPopup.className);
+        console.log('- Current display style:', window.getComputedStyle(compressionLevelPopup).display);
+        console.log('- Current visibility:', window.getComputedStyle(compressionLevelPopup).visibility);
+        console.log('- Current opacity:', window.getComputedStyle(compressionLevelPopup).opacity);
+        console.log('- Current z-index:', window.getComputedStyle(compressionLevelPopup).zIndex);
+        
+        // Check if any parent elements are hidden
+        let parent = compressionLevelPopup.parentElement;
+        let parentLevel = 0;
+        while (parent && parentLevel < 10) { // Check up to 10 levels up
+            const display = window.getComputedStyle(parent).display;
+            const visibility = window.getComputedStyle(parent).visibility;
+            const opacity = window.getComputedStyle(parent).opacity;
+            if (display === 'none' || visibility === 'hidden' || opacity === '0') {
+                console.warn(`Hidden parent element at level ${parentLevel}:`, {
+                    tag: parent.tagName,
+                    id: parent.id,
+                    class: parent.className,
+                    display,
+                    visibility,
+                    opacity
+                });
+            }
+            parent = parent.parentElement;
+            parentLevel++;
+        }
+    }
     
     // Try to force show the popup
     try {
+        console.log('Attempting to show popup...');
+        
+        // First approach: Use the active class
+        console.log('Adding active class and setting display:flex...');
         compressionLevelPopup.style.display = 'flex';
         compressionLevelPopup.classList.add('active');
         
         // Force reflow/repaint
         void compressionLevelPopup.offsetHeight;
         
-        console.log('After showing popup:');
-        console.log('- classList after add:', compressionLevelPopup.classList);
-        console.log('- display after show:', window.getComputedStyle(compressionLevelPopup).display);
+        // Log state after first attempt
+        console.log('After first show attempt:');
+        console.log('- classList:', compressionLevelPopup.className);
+        console.log('- display:', window.getComputedStyle(compressionLevelPopup).display);
+        console.log('- visibility:', window.getComputedStyle(compressionLevelPopup).visibility);
+        console.log('- opacity:', window.getComputedStyle(compressionLevelPopup).opacity);
         
         // Check if the popup is actually visible
         const isVisible = window.getComputedStyle(compressionLevelPopup).display !== 'none' && 
-                         window.getComputedStyle(compressionLevelPopup).visibility !== 'hidden';
-        console.log('Popup should be visible:', isVisible);
+                         window.getComputedStyle(compressionLevelPopup).visibility !== 'hidden' &&
+                         window.getComputedStyle(compressionLevelPopup).opacity !== '0';
         
-        // If still not visible, try another approach
-        if (!isVisible) {
-            console.warn('Popup not visible after show attempt, trying alternative method');
-            compressionLevelPopup.style.opacity = '1';
-            compressionLevelPopup.style.visibility = 'visible';
-            compressionLevelPopup.style.pointerEvents = 'auto';
-        }
-        
-        console.log('Final popup state:', {
+        console.log('Popup visibility check:', {
             display: window.getComputedStyle(compressionLevelPopup).display,
             visibility: window.getComputedStyle(compressionLevelPopup).visibility,
             opacity: window.getComputedStyle(compressionLevelPopup).opacity,
-            classList: [...compressionLevelPopup.classList]
+            isVisible: isVisible
         });
+        
+        // If still not visible, try a more aggressive approach
+        if (!isVisible) {
+            console.warn('Popup not visible after first attempt, trying alternative method...');
+            
+            // Try setting all possible visibility properties
+            compressionLevelPopup.style.display = 'flex';
+            compressionLevelPopup.style.visibility = 'visible';
+            compressionLevelPopup.style.opacity = '1';
+            compressionLevelPopup.style.pointerEvents = 'auto';
+            compressionLevelPopup.style.position = 'fixed';
+            compressionLevelPopup.style.top = '0';
+            compressionLevelPopup.style.left = '0';
+            compressionLevelPopup.style.width = '100%';
+            compressionLevelPopup.style.height = '100%';
+            compressionLevelPopup.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+            compressionLevelPopup.style.zIndex = '9999';
+            
+            // Force reflow/repaint again
+            void compressionLevelPopup.offsetHeight;
+            
+            console.log('After second show attempt:');
+            console.log('- display:', window.getComputedStyle(compressionLevelPopup).display);
+            console.log('- visibility:', window.getComputedStyle(compressionLevelPopup).visibility);
+            console.log('- opacity:', window.getComputedStyle(compressionLevelPopup).opacity);
+            
+            // Add a temporary red border to help with debugging
+            compressionLevelPopup.style.border = '4px solid red';
+            console.warn('Added red border to popup for debugging');
+        }
+        
+        // Final state check
+        const finalState = {
+            display: window.getComputedStyle(compressionLevelPopup).display,
+            visibility: window.getComputedStyle(compressionLevelPopup).visibility,
+            opacity: window.getComputedStyle(compressionLevelPopup).opacity,
+            position: window.getComputedStyle(compressionLevelPopup).position,
+            zIndex: window.getComputedStyle(compressionLevelPopup).zIndex,
+            classList: [...compressionLevelPopup.classList],
+            computedStyle: window.getComputedStyle(compressionLevelPopup)
+        };
+        
+        console.log('Final popup state:', finalState);
+        
+        // If still not visible, show an alert with debug info
+        const finalVisibility = window.getComputedStyle(compressionLevelPopup).display !== 'none' && 
+                              window.getComputedStyle(compressionLevelPopup).visibility !== 'hidden' &&
+                              window.getComputedStyle(compressionLevelPopup).opacity !== '0';
+        
+        if (!finalVisibility) {
+            console.error('Popup is still not visible after all attempts!');
+            alert('Debug: Popup is not visible. Check console for details.\n\n' +
+                  `Display: ${finalState.display}\n` +
+                  `Visibility: ${finalState.visibility}\n` +
+                  `Opacity: ${finalState.opacity}\n` +
+                  `Position: ${finalState.position}\n` +
+                  `z-index: ${finalState.zIndex}`);
+        } else {
+            console.log('Popup should now be visible!');
+        }
         
     } catch (error) {
         console.error('Error while trying to show popup:', error);
+        alert('Error showing popup: ' + error.message);
     }
     
     console.log('=== showCompressionLevelPopup END ===');

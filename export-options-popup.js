@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * @returns {Promise<void>}
  */
 async function handleExportButtonClick(exportType) {
+    console.log('=== handleExportButtonClick START ===');
     console.log('Export button clicked with type:', exportType);
     
     // First, hide the export options popup
@@ -66,21 +67,37 @@ async function handleExportButtonClick(exportType) {
     hideExportOptionsPopup();
     
     // Show the compression level popup
-    console.log('Showing compression level popup for export type:', exportType);
+    console.log('About to show compression level popup for export type:', exportType);
+    
+    // Debug: Check if the function exists
+    console.log('Checking if showCompressionLevelPopup exists:', typeof window.showCompressionLevelPopup);
     
     // Always try to show the compression popup first
     if (typeof window.showCompressionLevelPopup === 'function') {
         console.log('Calling showCompressionLevelPopup with type:', exportType);
-        window.showCompressionLevelPopup(exportType);
+        try {
+            window.showCompressionLevelPopup(exportType);
+            console.log('Successfully called showCompressionLevelPopup');
+        } catch (error) {
+            console.error('Error calling showCompressionLevelPopup:', error);
+            const errorMsg = 'Error showing compression options. See console for details.';
+            if (window.updateConsoleLog) {
+                window.updateConsoleLog('[ERROR] ' + errorMsg);
+            }
+            alert(errorMsg);
+        }
     } else {
         // If we can't show the compression popup, show an error and don't proceed with export
         const errorMsg = 'Error: Compression level selection is required but not available. Please refresh the page and try again.';
         console.error(errorMsg);
+        console.error('showCompressionLevelPopup is not a function. Available window properties:', Object.keys(window).filter(k => k.includes('show') || k.includes('compression') || k.includes('popup')));
+        
         if (window.updateConsoleLog) {
             window.updateConsoleLog('[ERROR] ' + errorMsg);
         }
         alert(errorMsg);
     }
+    console.log('=== handleExportButtonClick END ===');
 }
 
 /**
