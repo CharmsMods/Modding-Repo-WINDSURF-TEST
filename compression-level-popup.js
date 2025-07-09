@@ -30,6 +30,12 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmCompressionButton = document.getElementById('confirm-compression');
     cancelCompressionButton = document.getElementById('cancel-compression');
     
+    // Ensure the popup is hidden by default
+    if (compressionLevelPopup) {
+        compressionLevelPopup.style.display = 'none';
+        compressionLevelPopup.classList.remove('active');
+    }
+    
     // Debug: Log all found elements
     console.log('Found elements:', {
         compressionLevelPopup: compressionLevelPopup ? 'Found' : 'Not found',

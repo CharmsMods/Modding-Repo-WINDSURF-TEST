@@ -7,15 +7,6 @@
  */
 
 /* Compression Level Popup Styling */
-/* TEMPORARY DEBUG STYLES - REMOVE LATER */
-#compression-level-popup {
-    display: flex !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    background-color: rgba(0, 0, 0, 0.9) !important;
-    z-index: 9999 !important;
-}
-
 .compression-level-popup {
     display: none;
     position: fixed;
