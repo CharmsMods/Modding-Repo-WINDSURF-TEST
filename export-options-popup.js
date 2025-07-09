@@ -59,30 +59,27 @@ document.addEventListener('DOMContentLoaded', () => {
  * @returns {Promise<void>}
  */
 async function handleExportButtonClick(exportType) {
-    try {
-        if (typeof window.initiateZipDownload !== 'function') {
-            throw new Error('Export functionality not initialized. Please refresh the page.');
-        }
-        
-        hideExportOptionsPopup();
-        
-        // Show the compression level popup instead of directly initiating the download
-        if (typeof window.showCompressionLevelPopup === 'function') {
-            window.showCompressionLevelPopup(exportType);
-        } else {
-            // Fallback to default compression if the popup function isn't available
-            console.warn('Compression level popup not available, using default compression');
-            if (window.updateConsoleLog) {
-                window.updateConsoleLog('[WARNING] Using default compression level (5)');
-            }
-            await window.initiateZipDownload(exportType, 5); // Default compression level 5
-        }
-    } catch (error) {
-        console.error('Export failed:', error);
+    console.log('Export button clicked with type:', exportType);
+    
+    // First, hide the export options popup
+    console.log('Hiding export options popup');
+    hideExportOptionsPopup();
+    
+    // Show the compression level popup
+    console.log('Showing compression level popup for export type:', exportType);
+    
+    // Always try to show the compression popup first
+    if (typeof window.showCompressionLevelPopup === 'function') {
+        console.log('Calling showCompressionLevelPopup with type:', exportType);
+        window.showCompressionLevelPopup(exportType);
+    } else {
+        // If we can't show the compression popup, show an error and don't proceed with export
+        const errorMsg = 'Error: Compression level selection is required but not available. Please refresh the page and try again.';
+        console.error(errorMsg);
         if (window.updateConsoleLog) {
-            window.updateConsoleLog(`[ERROR] Export failed: ${error.message}`);
+            window.updateConsoleLog('[ERROR] ' + errorMsg);
         }
-        alert(`Export failed: ${error.message}`);
+        alert(errorMsg);
     }
 }
 

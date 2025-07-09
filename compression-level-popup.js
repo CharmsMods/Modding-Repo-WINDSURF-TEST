@@ -20,9 +20,10 @@ let pendingExportType = null;
 
 // Initialize the popup when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOMContentLoaded: Initializing compression level popup');
+    console.log('=== compression-level-popup.js: DOMContentLoaded ===');
     
     // Get DOM elements
+    console.log('Querying for popup elements...');
     compressionLevelPopup = document.getElementById('compression-level-popup');
     compressionLevelSlider = document.getElementById('compression-level-slider');
     compressionLevelValue = document.getElementById('compression-level-value');
@@ -30,11 +31,31 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelCompressionButton = document.getElementById('cancel-compression');
     
     // Debug: Log all found elements
-    console.log('compressionLevelPopup:', compressionLevelPopup);
-    console.log('compressionLevelSlider:', compressionLevelSlider);
-    console.log('compressionLevelValue:', compressionLevelValue);
-    console.log('confirmCompressionButton:', confirmCompressionButton);
-    console.log('cancelCompressionButton:', cancelCompressionButton);
+    console.log('Found elements:', {
+        compressionLevelPopup: compressionLevelPopup ? 'Found' : 'Not found',
+        compressionLevelSlider: compressionLevelSlider ? 'Found' : 'Not found',
+        compressionLevelValue: compressionLevelValue ? 'Found' : 'Not found',
+        confirmCompressionButton: confirmCompressionButton ? 'Found' : 'Not found',
+        cancelCompressionButton: cancelCompressionButton ? 'Found' : 'Not found'
+    });
+    
+    // Check if the popup is in the DOM
+    if (!compressionLevelPopup) {
+        console.error('CRITICAL: compression-level-popup element not found in DOM!');
+        console.log('Searching for any element with id containing "compression"...');
+        const allElements = document.querySelectorAll('*');
+        const compressionElements = [];
+        allElements.forEach(el => {
+            if (el.id && el.id.includes('compression')) {
+                compressionElements.push({
+                    id: el.id,
+                    tagName: el.tagName,
+                    className: el.className
+                });
+            }
+        });
+        console.log('Elements with "compression" in ID:', compressionElements);
+    }
 
     // Set up event listeners
     if (compressionLevelSlider && compressionLevelValue) {
@@ -71,35 +92,80 @@ document.addEventListener('DOMContentLoaded', () => {
  * @param {string} exportType - The type of export ('client' or 'browser').
  */
 window.showCompressionLevelPopup = (exportType) => {
-    console.log('showCompressionLevelPopup called with type:', exportType);
+    console.log('=== showCompressionLevelPopup START ===');
+    console.log('Export type:', exportType);
     
     // Re-find the popup element in case it wasn't found during initial load
     if (!compressionLevelPopup) {
+        console.log('Popup element not found in memory, querying DOM...');
         compressionLevelPopup = document.getElementById('compression-level-popup');
-        console.log('Re-queried compressionLevelPopup:', compressionLevelPopup);
+        console.log('Re-queried compressionLevelPopup:', compressionLevelPopup ? 'Found' : 'Not found');
     }
     
     if (!compressionLevelPopup) {
-        console.error('Compression level popup element not found');
+        const errorMsg = 'Compression level popup element not found in DOM';
+        console.error(errorMsg);
         // Fall back to direct export with default compression
         if (typeof window.initiateZipDownload === 'function') {
             console.warn('Falling back to default compression level (5)');
             window.initiateZipDownload(exportType, 5);
+        } else {
+            console.error('initiateZipDownload function not found!');
         }
+        console.log('=== showCompressionLevelPopup END (error) ===');
         return;
     }
 
     // Store the export type for when the user confirms
     pendingExportType = exportType;
+    console.log('Stored export type:', pendingExportType);
     
     // Show the popup
     console.log('Showing compression level popup');
-    compressionLevelPopup.style.display = 'flex';
-    compressionLevelPopup.classList.add('active');
     
-    // Debug: Log the current state
-    console.log('compressionLevelPopup classList:', compressionLevelPopup.classList);
-    console.log('compressionLevelPopup style.display:', window.getComputedStyle(compressionLevelPopup).display);
+    // Debug: Check current state before showing
+    console.log('Before showing popup:');
+    console.log('- compressionLevelPopup:', compressionLevelPopup);
+    console.log('- Current classList:', compressionLevelPopup.classList);
+    console.log('- Current display style:', window.getComputedStyle(compressionLevelPopup).display);
+    
+    // Try to force show the popup
+    try {
+        compressionLevelPopup.style.display = 'flex';
+        compressionLevelPopup.classList.add('active');
+        
+        // Force reflow/repaint
+        void compressionLevelPopup.offsetHeight;
+        
+        console.log('After showing popup:');
+        console.log('- classList after add:', compressionLevelPopup.classList);
+        console.log('- display after show:', window.getComputedStyle(compressionLevelPopup).display);
+        
+        // Check if the popup is actually visible
+        const isVisible = window.getComputedStyle(compressionLevelPopup).display !== 'none' && 
+                         window.getComputedStyle(compressionLevelPopup).visibility !== 'hidden';
+        console.log('Popup should be visible:', isVisible);
+        
+        // If still not visible, try another approach
+        if (!isVisible) {
+            console.warn('Popup not visible after show attempt, trying alternative method');
+            compressionLevelPopup.style.opacity = '1';
+            compressionLevelPopup.style.visibility = 'visible';
+            compressionLevelPopup.style.pointerEvents = 'auto';
+        }
+        
+        console.log('Final popup state:', {
+            display: window.getComputedStyle(compressionLevelPopup).display,
+            visibility: window.getComputedStyle(compressionLevelPopup).visibility,
+            opacity: window.getComputedStyle(compressionLevelPopup).opacity,
+            classList: [...compressionLevelPopup.classList]
+        });
+        
+    } catch (error) {
+        console.error('Error while trying to show popup:', error);
+    }
+    
+    console.log('=== showCompressionLevelPopup END ===');
 };
 
 /**
@@ -116,40 +182,67 @@ function hideCompressionLevelPopup() {
  * Initiates the ZIP download with the selected compression level.
  */
 async function confirmCompression() {
+    console.log('Confirm compression button clicked');
+    
     if (!pendingExportType) {
-        console.error('No export type selected');
+        const errorMsg = 'No export type selected. Please try again.';
+        console.error(errorMsg);
+        alert(errorMsg);
+        hideCompressionLevelPopup();
         return;
     }
 
-    // Get the selected compression level (0-9, where 0 is no compression, 9 is maximum)
+    // Get the selected compression level (0-100 from slider)
     const compressionLevel = parseInt(compressionLevelSlider.value, 10);
+    console.log('Selected compression level:', compressionLevel, '%');
     
     // Map the 0-100 slider value to 0-9 for JSZip
     const jsZipCompressionLevel = Math.round((compressionLevel / 100) * 9);
+    console.log('Mapped to JSZip compression level:', jsZipCompressionLevel);
     
     // Hide the popup
+    console.log('Hiding compression level popup');
     hideCompressionLevelPopup();
+    
+    // Show loading overlay
+    if (window.showLoadingOverlay) {
+        window.showLoadingOverlay(`Preparing ${pendingExportType} export with compression level ${jsZipCompressionLevel}...`);
+    }
     
     // Log the selected compression level
     if (window.updateConsoleLog) {
-        window.updateConsoleLog(`Using compression level: ${jsZipCompressionLevel} (${compressionLevel}%)`);
+        window.updateConsoleLog(`Starting export with compression level: ${jsZipCompressionLevel} (${compressionLevel}%)`);
     }
     
     // Call the export function with the selected compression level
     if (typeof window.initiateZipDownload === 'function') {
         try {
+            console.log('Calling initiateZipDownload with:', { 
+                exportType: pendingExportType, 
+                compressionLevel: jsZipCompressionLevel 
+            });
+            
             await window.initiateZipDownload(pendingExportType, jsZipCompressionLevel);
+            
+            console.log('Export completed successfully');
         } catch (error) {
-            console.error('Error during export:', error);
+            const errorMsg = `Error during export: ${error.message}`;
+            console.error(errorMsg, error);
+            
             if (window.updateConsoleLog) {
-                window.updateConsoleLog(`[ERROR] Export failed: ${error.message}`);
+                window.updateConsoleLog(`[ERROR] ${errorMsg}`);
             }
+            
             if (window.hideLoadingOverlayWithDelay) {
                 window.hideLoadingOverlayWithDelay(3000, 'Export failed!');
             }
+            
+            alert('Export failed: ' + error.message);
         }
     } else {
-        console.error('initiateZipDownload function not found');
+        const errorMsg = 'Error: Export functionality not available. Please refresh the page and try again.';
+        console.error(errorMsg);
+        alert(errorMsg);
     }
 }
 
