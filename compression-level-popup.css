@@ -23,8 +23,9 @@
 }
 
 .compression-level-popup.active {
-    display: flex;
+    display: flex !important;
     opacity: 1;
+    visibility: visible;
 }
 
 .compression-level-content {

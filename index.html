@@ -202,6 +202,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="asset-list-page.js"></script>
     <script src="asset-editor-modal.js"></script>
+    <script src="compression-level-popup.js"></script>
     <script src="export-options-popup.js"></script>
     <script src="bulk-operations.js"></script>
     <!-- Fullscreen Image Viewer -->
@@ -214,7 +215,12 @@
         </div>
     </div>
 
-    <!-- Compression Level Popup -->
+
+
+    <script src="image-converter.js"></script>
+    <script src="import-export.js"></script>
+    
+    <!-- Compression Level Popup - Placed at the end of body to ensure DOM is ready -->
     <div id="compression-level-popup" class="compression-level-popup">
         <div class="compression-level-content">
             <h2>Select Compression Level</h2>
@@ -269,9 +275,5 @@
             </div>
         </div>
     </div>
-
-    <script src="image-converter.js"></script>
-    <script src="import-export.js"></script>
-    <script src="compression-level-popup.js"></script>
 </body>
 </html>
