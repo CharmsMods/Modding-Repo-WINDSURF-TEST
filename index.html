@@ -221,6 +221,7 @@
     <script src="import-export.js"></script>
     
     <!-- Compression Level Popup - Placed at the end of body to ensure DOM is ready -->
+    <!-- Compression Level Popup - Placed at the end of body to ensure DOM is ready -->
     <div id="compression-level-popup" class="compression-level-popup">
         <div class="compression-level-content">
             <h2>Select Compression Level</h2>
@@ -264,14 +265,14 @@
                     <input type="radio" id="compression-max" name="compression-preset" value="100">
                     <label for="compression-max" class="compression-option-label">
                         <span class="compression-option-title">Maximum Compression (Slowest)</span>
-                        <span class="compression-option-desc">Smallest file size, but takes longer to create</span>
+                        <span class="compression-option-desc">Smallest file size, but takes the longest</span>
                     </label>
                 </div>
             </div>
             
-            <div class="compression-buttons">
-                <button id="cancel-compression">Cancel</button>
-                <button id="confirm-compression">Continue with Export</button>
+            <div class="compression-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="cancel-compression" class="button secondary">Cancel</button>
+                <button id="confirm-compression" class="button primary">Export with Selected Compression</button>
             </div>
         </div>
     </div>
