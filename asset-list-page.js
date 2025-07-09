@@ -776,10 +776,11 @@ window.loadExcludedState = function() {
 /**
  * Initiates the ZIP download process for the specified export type.
  * @param {'client'|'browser'} exportType - The type of export to perform
+ * @param {number} [compressionLevel=5] - The compression level (0-9) where 0 is no compression and 9 is maximum compression
  * @returns {Promise<void>}
  * @throws {Error} If there's an error during ZIP generation
  */
-async function initiateZipDownload(exportType) {
+async function initiateZipDownload(exportType, compressionLevel = 5) {
     if (!exportType || !['client', 'browser'].includes(exportType)) {
         throw new Error('Invalid export type. Must be either "client" or "browser".');
     }
@@ -943,11 +944,16 @@ async function initiateZipDownload(exportType) {
 
 
     try {
+        // Ensure compression level is within valid range (0-9)
+        const safeCompressionLevel = Math.max(0, Math.min(9, compressionLevel));
+        
+        window.updateConsoleLog(`Compressing ZIP with level: ${safeCompressionLevel} (0-9 scale)`);
+        
         const content = await zip.generateAsync({
             type: "blob",
-            compression: "DEFLATE", // Use compression
+            compression: safeCompressionLevel > 0 ? "DEFLATE" : "STORE", // Use STORE (no compression) if level is 0
             compressionOptions: {
-                level: 1 // Changed from 9 to 5 for better performance
+                level: safeCompressionLevel
             }
         }, function updateCallback(metadata) {
             // Update progress during ZIP generation (optional, but good for large zips)

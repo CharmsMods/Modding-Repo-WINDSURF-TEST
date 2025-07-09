@@ -65,7 +65,18 @@ async function handleExportButtonClick(exportType) {
         }
         
         hideExportOptionsPopup();
-        await window.initiateZipDownload(exportType);
+        
+        // Show the compression level popup instead of directly initiating the download
+        if (typeof window.showCompressionLevelPopup === 'function') {
+            window.showCompressionLevelPopup(exportType);
+        } else {
+            // Fallback to default compression if the popup function isn't available
+            console.warn('Compression level popup not available, using default compression');
+            if (window.updateConsoleLog) {
+                window.updateConsoleLog('[WARNING] Using default compression level (5)');
+            }
+            await window.initiateZipDownload(exportType, 5); // Default compression level 5
+        }
     } catch (error) {
         console.error('Export failed:', error);
         if (window.updateConsoleLog) {

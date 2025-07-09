@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="asset-editor-modal.css">
     <link rel="stylesheet" href="bulk-operations-modal.css">
     <link rel="stylesheet" href="export-options-popup.css">
+    <link rel="stylesheet" href="compression-level-popup.css">
 </head>
 <body>
     <header>
@@ -213,7 +214,64 @@
         </div>
     </div>
 
+    <!-- Compression Level Popup -->
+    <div id="compression-level-popup" class="compression-level-popup">
+        <div class="compression-level-content">
+            <h2>Select Compression Level</h2>
+            <p>Choose the compression level for your ZIP file. Higher compression = smaller file size but takes longer to create.</p>
+            
+            <div class="compression-slider-container">
+                <label for="compression-level-slider">Compression Level: <span id="compression-level-value">50%</span></label>
+                <input type="range" id="compression-level-slider" min="0" max="100" value="50" step="1">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8em; color: #aaa; margin-top: 5px;">
+                    <span>Faster</span>
+                    <span>Smaller File</span>
+                </div>
+            </div>
+            
+            <div class="compression-options">
+                <div class="compression-option" onclick="document.getElementById('compression-level-slider').value = '0'; document.getElementById('compression-level-value').textContent = '0%';">
+                    <input type="radio" id="compression-none" name="compression-preset" value="0">
+                    <label for="compression-none" class="compression-option-label">
+                        <span class="compression-option-title">No Compression (Fastest)</span>
+                        <span class="compression-option-desc">No compression, fastest export time</span>
+                    </label>
+                </div>
+                
+                <div class="compression-option" onclick="document.getElementById('compression-level-slider').value = '30'; document.getElementById('compression-level-value').textContent = '30%';">
+                    <input type="radio" id="compression-fast" name="compression-preset" value="30" checked>
+                    <label for="compression-fast" class="compression-option-label">
+                        <span class="compression-option-title">Fast Compression</span>
+                        <span class="compression-option-desc">Good balance between speed and file size</span>
+                    </label>
+                </div>
+                
+                <div class="compression-option" onclick="document.getElementById('compression-level-slider').value = '70'; document.getElementById('compression-level-value').textContent = '70%';">
+                    <input type="radio" id="compression-medium" name="compression-preset" value="70">
+                    <label for="compression-medium" class="compression-option-label">
+                        <span class="compression-option-title">Medium Compression</span>
+                        <span class="compression-option-desc">Good compression with reasonable speed</span>
+                    </label>
+                </div>
+                
+                <div class="compression-option" onclick="document.getElementById('compression-level-slider').value = '100'; document.getElementById('compression-level-value').textContent = '100%';">
+                    <input type="radio" id="compression-max" name="compression-preset" value="100">
+                    <label for="compression-max" class="compression-option-label">
+                        <span class="compression-option-title">Maximum Compression (Slowest)</span>
+                        <span class="compression-option-desc">Smallest file size, but takes longer to create</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="compression-buttons">
+                <button id="cancel-compression">Cancel</button>
+                <button id="confirm-compression">Continue with Export</button>
+            </div>
+        </div>
+    </div>
+
     <script src="image-converter.js"></script>
     <script src="import-export.js"></script>
+    <script src="compression-level-popup.js"></script>
 </body>
 </html>
