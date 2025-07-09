@@ -1,301 +1,69 @@
 /* export-options-popup.css */
 
 /* Export Options Overlay */
-.modal-overlay {
+.export-options-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.85); /* Dark, semi-transparent background */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1003;
-    backdrop-filter: blur(8px);
+    z-index: 1003; /* Higher than other modals to ensure it's on top */
+    backdrop-filter: blur(8px); /* Blur effect */
     -webkit-backdrop-filter: blur(8px);
-    visibility: hidden;
+    visibility: hidden; /* Hidden by default */
     opacity: 0;
     transition: visibility 0.3s ease, opacity 0.3s ease;
 }
 
-.modal-overlay.active {
+.export-options-overlay.active {
     visibility: visible;
     opacity: 1;
 }
 
 /* Export Options Content Box */
 .export-options-content {
-    background: #2d2d2d;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #2a2a2a; /* Dark background */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Subtle border */
     border-radius: 12px;
-    padding: 25px;
+    padding: 2.5rem; /* Ample padding */
     width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 450px; /* Compact width for a choice popup */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Soft shadow */
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Space between elements */
     position: relative;
     color: #ffffff;
-    text-align: left;
+    text-align: center;
+    margin: auto; /* Center the content within the flex container */
 }
 
 .export-options-content h2 {
-    margin-top: 0;
-    color: #6c5ce7;
-    font-size: 1.8rem;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #444;
-    text-align: center;
+    font-size: 2rem;
+    color: #6c5ce7; /* Primary accent color */
+    margin-bottom: 0.5rem;
 }
 
-/* Compression Options Section */
-.compression-options {
-    margin: 20px 0;
-    padding: 15px;
-    background: #252525;
-    border-radius: 8px;
-    border: 1px solid #3a3a3a;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group:last-child {
-    margin-bottom: 0;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: #e0e0e0;
-    font-weight: 500;
-}
-
-.form-control {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 4px;
-    border: 1px solid #444;
-    background: #333;
-    color: #fff;
-    font-size: 14px;
-    transition: all 0.2s;
-}
-
-.form-control:focus {
-    border-color: #6c5ce7;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.3);
-}
-
-.help-text {
-    margin-top: 6px;
-    color: #999;
-    font-size: 0.85em;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    position: relative;
-}
-
-.help-text .tooltip {
-    visibility: hidden;
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    border-radius: 4px;
-    padding: 8px 12px;
-    position: absolute;
-    z-index: 1;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    opacity: 0;
-    transition: opacity 0.3s;
-    width: 200px;
-    font-size: 0.9em;
-    line-height: 1.4;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    pointer-events: none;
-}
-
-.help-text:hover .tooltip {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* Checkbox Styles */
-.checkbox-container {
-    display: flex;
-    align-items: center;
-    position: relative;
-    padding-left: 30px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    user-select: none;
-    color: #e0e0e0;
-    font-size: 14px;
-}
-
-.checkbox-container input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-}
-
-.checkmark {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 20px;
-    width: 20px;
-    background-color: #333;
-    border: 1px solid #555;
-    border-radius: 4px;
-    transition: all 0.2s;
-}
-
-.checkbox-container:hover input ~ .checkmark {
-    background-color: #3a3a3a;
-}
-
-.checkbox-container input:checked ~ .checkmark {
-    background-color: #6c5ce7;
-    border-color: #6c5ce7;
-}
-
-.checkmark:after {
-    content: "";
-    position: absolute;
-    display: none;
-}
-
-.checkbox-container input:checked ~ .checkmark:after {
-    display: block;
-}
-
-.checkbox-container .checkmark:after {
-    left: 7px;
-    top: 3px;
-    width: 5px;
-    height: 10px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-}
-
-/* Export Buttons */
-.export-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 25px;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-}
-
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 14px;
-}
-
-.btn-primary {
-    background-color: #6c5ce7;
-    color: white;
-}
-
-.btn-primary:hover {
-    background-color: #5a4cd4;
-    transform: translateY(-1px);
-}
-
-.btn-secondary {
-    background-color: #4a4a4a;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background-color: #5a5a5a;
-    transform: translateY(-1px);
-}
-
-.btn-cancel {
-    background-color: transparent;
-    color: #999;
-}
-
-.btn-cancel:hover {
-    color: #fff;
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-    color: white;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #5c4cd4, #9188ff);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
-}
-
-.btn-primary:active {
-    transform: translateY(0);
-}
-
-.btn-secondary {
-    background: #4a4a4a;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background: #3a3a3a;
-    transform: translateY(-2px);
-}
-
-.btn-secondary:active {
-    transform: translateY(0);
-}
-
-.btn-cancel {
-    background: transparent;
-    color: #aaa;
-    border: 1px solid #555;
-}
-
-.btn-cancel:hover {
-    background: #3a3a3a;
-    color: #fff;
+.export-options-content p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1rem;
 }
 
 /* Close Button */
-#close-export-popup {
+.close-export-popup-button {
     position: absolute;
     top: 1rem;
     right: 1.5rem;
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: rgba(255, 255, 255, 0.6);
     cursor: pointer;
     transition: color 0.2s ease, transform 0.2s ease;
     line-height: 1;
-    background: none;
-    border: none;
-    padding: 0;
 }
 
 .close-export-popup-button:hover {
@@ -303,44 +71,72 @@
     transform: rotate(90deg);
 }
 
+/* Export Buttons Container */
+.export-buttons-container {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 1rem; /* Space between buttons */
+}
+
+/* Export Option Buttons */
+.export-option-button {
+    background: linear-gradient(135deg, #6c5ce7, #fd79a8); /* Gradient style */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 1.2rem 2rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.export-option-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(108, 92, 231, 0.5);
+    background: linear-gradient(135deg, #fd79a8, #6c5ce7); /* Reverse gradient on hover */
+}
+
+.export-option-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
 /* Responsive Adjustments */
 @media (max-width: 600px) {
     .export-options-content {
-        padding: 20px 15px;
-        width: 95%;
+        padding: 2rem;
+        max-width: 95%;
     }
-    
-    .export-buttons {
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .btn {
-        width: 100%;
-        margin: 0;
-    }
-    
+
     .export-options-content h2 {
-        font-size: 1.5rem;
-        padding-right: 30px;
+        font-size: 1.8rem;
+    }
+
+    .export-options-content p {
+        font-size: 1rem;
+    }
+
+    .export-option-button {
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
     }
 }
 
 @media (max-width: 400px) {
     .export-options-content {
-        padding: 15px 10px;
+        padding: 1.5rem;
+        gap: 1rem;
     }
-    
-    .compression-options {
-        padding: 12px;
+
+    .export-options-content h2 {
+        font-size: 1.5rem;
     }
-    
-    .form-group {
-        margin-bottom: 15px;
-    }
-    
-    .help-text .tooltip {
-        width: 160px;
-        font-size: 0.8em;
+
+    .export-option-button {
+        font-size: 1rem;
+        padding: 0.8rem 1.2rem;
     }
 }
